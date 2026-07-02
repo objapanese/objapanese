@@ -91,6 +91,8 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
+        const GOOGLE_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyetnlJlnFp8atdReeRS4Rx8bA1IVDVialahLq2iHj4ARTGLAXWcgEE0otjH-edDub9mQ/exec';
+
         const TIME_SLOTS = ["19:00~19:50", "20:00~20:50", "21:00~21:50"];
 
         const PLANS = [
@@ -115,11 +117,10 @@
         const generateDemoBookedSlots = () => {
             const slots = [];
             let currentDate = new Date(); 
-            if (currentDate.getHours() >= 21) {
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
+            currentDate.setHours(currentDate.getHours() + 24);
+
             let validDaysCount = 0;
-            for (let i = 0; i < 60; i++) { // 測試假資料域也延長到60天
+            for (let i = 0; i < 60; i++) { 
                 const dayOfWeek = currentDate.getDay();
                 if (dayOfWeek === 0 || (dayOfWeek >= 3 && dayOfWeek <= 6)) {
                     if (validDaysCount === 0) slots.push(`${formatDate(currentDate)}-19:00~19:50`);
@@ -133,21 +134,25 @@
         };
 
         const StepIndicator = ({ currentStep }) => (
-            <div className="flex items-center justify-center space-x-2 md:space-x-4 mb-12 font-serif text-xs md:text-sm tracking-widest relative z-10 select-none">
-                <div className={`flex flex-col items-center transition-all px-2 py-1 bg-[#FAF7F2] z-10 ${currentStep >= 1 ? 'text-[#4A3F35] font-bold' : 'text-[#8C7E71] opacity-60'}`}>
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 transition-all font-sans ${currentStep >= 1 ? 'border-2 border-[#4A3F35] bg-[#4A3F35] text-white shadow-sm' : 'border-2 border-[#E6DED5] bg-white text-[#8C7E71]'}`}>1</span>
-                    <span>時間選擇</span>
-                </div>
-                <div className={`absolute left-1/2 top-4 md:top-5 -translate-x-1/2 w-1/3 md:w-1/4 h-[2px] -z-10 transition-all ${currentStep >= 2 ? 'bg-[#4A3F35]' : 'bg-[#E6DED5]'}`}></div>
-                <div className={`flex flex-col items-center transition-all px-2 py-1 bg-[#FAF7F2] z-10 ${currentStep >= 2 ? 'text-[#4A3F35] font-bold' : 'text-[#8C7E71] opacity-60'}`}>
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 transition-all font-sans ${currentStep >= 2 ? 'border-2 border-[#4A3F35] bg-[#4A3F35] text-white shadow-sm' : 'border-2 border-[#E6DED5] bg-white text-[#8C7E71]'}`}>2</span>
-                    <span>學生資料</span>
-                </div>
-                <div className={`absolute left-1/2 top-4 md:top-5 ml-[16.6%] md:ml-[12.5%] w-1/3 md:w-1/4 h-[2px] -z-10 transition-all ${currentStep >= 3 ? 'bg-[#4A3F35]' : 'bg-[#E6DED5]'}`}></div>
-                <div className={`flex flex-col items-center transition-all px-2 py-1 bg-[#FAF7F2] z-10 ${currentStep >= 3 ? 'text-[#4A3F35] font-bold' : 'text-[#8C7E71] opacity-60'}`}>
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 transition-all font-sans ${currentStep >= 3 ? 'border-2 border-[#4A3F35] bg-[#4A3F35] text-white shadow-sm' : 'border-2 border-[#E6DED5] bg-white text-[#8C7E71]'}`}>3</span>
-                    <span>確認結帳</span>
-                </div>
+            <div className="flex justify-between items-start w-full max-w-lg mx-auto mb-6 font-serif text-xs md:text-sm tracking-widest relative z-10 select-none px-2">
+                <div className="absolute top-4 left-[12.5%] right-[12.5%] h-[2px] bg-[#E6DED5] -z-10"></div>
+                <div 
+                    className="absolute top-4 left-[12.5%] h-[2px] bg-[#4A3F35] -z-10 transition-all duration-500 ease-in-out" 
+                    style={{ width: `${(Math.min(currentStep, 4) - 1) * 33.33}%` }}
+                ></div>
+                {[
+                    { step: 1, label: '日期' },
+                    { step: 2, label: '時段' },
+                    { step: 3, label: '資料' },
+                    { step: 4, label: '結帳' }
+                ].map(item => (
+                    <div key={item.step} className={`flex flex-col items-center transition-all bg-[#FAF7F2] px-2 z-10 duration-300 ${currentStep >= item.step ? 'text-[#4A3F35] font-bold' : 'text-[#8C7E71] opacity-60'}`}>
+                        <span className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 transition-all font-sans duration-300 ${currentStep >= item.step ? 'border-2 border-[#4A3F35] bg-[#4A3F35] text-white shadow-sm scale-110' : 'border-2 border-[#E6DED5] bg-white text-[#8C7E71]'}`}>
+                            {item.step}
+                        </span>
+                        <span>{item.label}</span>
+                    </div>
+                ))}
             </div>
         );
 
@@ -159,29 +164,118 @@
             const [pwdError, setPwdError] = useState('');
             const [selectedDate, setSelectedDate] = useState(null);
             const [selectedTime, setSelectedTime] = useState(null);
-            const [formData, setFormData] = useState({ name: '', email: '', level: '', plan: '', prepaidCode: '' });
+            
+            const [formData, setFormData] = useState({ name: '', email: '', level: '已與老師確認過', plan: '', prepaidCode: '' });
+            
             const [isPaying, setIsPaying] = useState(false);
             const [paymentSuccess, setPaymentSuccess] = useState(false);
             const [remainingClasses, setRemainingClasses] = useState(null);
             const [errorMsg, setErrorMsg] = useState("");
             const [viewDate, setViewDate] = useState(new Date());
 
+            const resetAppToHome = () => {
+                setStep(1);
+                setSelectedDate(null);
+                setSelectedTime(null);
+                setFormData({ name: '', email: '', level: '已與老師確認過', plan: '', prepaidCode: '' });
+                setIsPaying(false);
+                setPaymentSuccess(false);
+                setRemainingClasses(null);
+                setErrorMsg("");
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
             const initialBookedSlots = useMemo(() => generateDemoBookedSlots(), []);
-            const [bookedSlots, setBookedSlots] = useState(initialBookedSlots);
-            // 新增狀態：存放被整天關閉的日期 (格式 YYYY-MM-DD)
-            const [closedDays, setClosedDays] = useState([]);
+            
+            const [bookedSlots, setBookedSlots] = useState(() => {
+                const saved = localStorage.getItem('japanese_tutor_booked_slots');
+                return saved ? JSON.parse(saved) : [];
+            });
+            const [closedDays, setClosedDays] = useState(() => {
+                const saved = localStorage.getItem('japanese_tutor_closed_days');
+                return saved ? JSON.parse(saved) : [];
+            });
+            
+            const [isLoadingSlots, setIsLoadingSlots] = useState(true);
+
+            useEffect(() => {
+                localStorage.setItem('japanese_tutor_booked_slots', JSON.stringify(bookedSlots));
+            }, [bookedSlots]);
+
+            useEffect(() => {
+                localStorage.setItem('japanese_tutor_closed_days', JSON.stringify(closedDays));
+            }, [closedDays]);
+
+            useEffect(() => {
+                let interval;
+                
+                const fetchBookedSlots = async () => {
+                    if (!GOOGLE_WEBHOOK_URL) {
+                        if (bookedSlots.length === 0) {
+                            setBookedSlots(initialBookedSlots);
+                        }
+                        setIsLoadingSlots(false);
+                        return;
+                    }
+                    try {
+                        const response = await fetch(GOOGLE_WEBHOOK_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({ type: 'get_slots' })
+                        });
+                        
+                        const text = await response.text();
+                        let result = null;
+                        try {
+                            result = JSON.parse(text);
+                        } catch (e) {}
+
+                        if (result) {
+                            if (result.slots && result.slots.length > 0) {
+                                 setBookedSlots(prev => {
+                                    const combined = [...new Set([...prev, ...result.slots])];
+                                    return combined;
+                                });
+                            }
+                            if (result.closedDays) {
+                                 setClosedDays(prev => {
+                                    const combined = [...new Set([...prev, ...result.closedDays])];
+                                    return combined;
+                                });
+                            }
+                        }
+                    } catch (error) {
+                        console.warn('更新時段失敗，可能處於離線狀態。使用本機暫存資料。');
+                        if (bookedSlots.length === 0) {
+                            setBookedSlots(initialBookedSlots);
+                        }
+                    } finally {
+                        setIsLoadingSlots(false);
+                    }
+                };
+
+                fetchBookedSlots();
+
+                if (step === 1 || step === 2) {
+                    interval = setInterval(fetchBookedSlots, 8000);
+                }
+
+                return () => {
+                    if (interval) clearInterval(interval);
+                };
+            }, [step, initialBookedSlots]);
 
             const prevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
             const nextMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
 
             const handleNext = () => {
-                if (step === 1 && selectedDate && selectedTime) {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    setStep(2);
-                }
-                if (step === 2 && formData.name && formData.email && formData.level) {
+                if (step === 2 && (isAdmin || (selectedDate && selectedTime))) {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                     setStep(3);
+                }
+                if (step === 3 && formData.name && formData.email) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    setStep(4);
                 }
             };
 
@@ -193,7 +287,6 @@
             };
 
             const handlePayment = async () => {
-                // 優先執行開啟結帳視窗，避免被 Safari 阻擋彈出視窗
                 let newWindow = null;
                 if (formData.plan !== 'prepaid') {
                     let paymentUrl = '';
@@ -209,8 +302,6 @@
                 setIsPaying(true);
                 setErrorMsg("");
                 
-                const GOOGLE_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyetnlJlnFp8atdReeRS4Rx8bA1IVDVialahLq2iHj4ARTGLAXWcgEE0otjH-edDub9mQ/exec';
-                
                 if (formData.plan === 'prepaid') {
                     if (GOOGLE_WEBHOOK_URL) {
                         try {
@@ -222,7 +313,8 @@
                                     name: formData.name,
                                     email: formData.email,
                                     level: formData.level,
-                                    date: formatDisplayDate(selectedDate),
+                                    date: formatDate(selectedDate),
+                                    displayDate: formatDisplayDate(selectedDate), 
                                     time: selectedTime,
                                     code: formData.prepaidCode
                                 })
@@ -235,7 +327,7 @@
                                 setIsPaying(false);
                                 setPaymentSuccess(true);
                                 const slotKey = `${formatDate(selectedDate)}-${selectedTime}`;
-                                setBookedSlots([...bookedSlots, slotKey]);
+                                setBookedSlots(prev => [...prev, slotKey]);
                             } else {
                                 setIsPaying(false);
                                 setErrorMsg("預約失敗：" + result.message);
@@ -258,7 +350,8 @@
                                     name: formData.name,
                                     email: formData.email,
                                     level: formData.level,
-                                    date: formatDisplayDate(selectedDate),
+                                    date: formatDate(selectedDate),
+                                    displayDate: formatDisplayDate(selectedDate),
                                     time: selectedTime,
                                     plan: selectedPlanName
                                 })
@@ -272,7 +365,7 @@
                         setIsPaying(false);
                         setPaymentSuccess(true);
                         const slotKey = `${formatDate(selectedDate)}-${selectedTime}`;
-                        setBookedSlots([...bookedSlots, slotKey]);
+                        setBookedSlots(prev => [...prev, slotKey]);
                     }, 1000);
                 }
             };
@@ -288,50 +381,52 @@
                 const firstDayIndex = (rawFirstDay + 6) % 7; 
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-                const today = new Date();
-                if (new Date().getHours() >= 21) today.setDate(today.getDate() + 1);
-                today.setHours(0, 0, 0, 0);
+                const now = new Date();
+                const twentyFourHoursLater = new Date(now.getTime() + (24 * 60 * 60 * 1000));
                 
-                const maxDate = new Date(today);
-                maxDate.setMonth(maxDate.getMonth() + 2); // 改為往後開放兩個月
+                const todayMidnight = new Date();
+                todayMidnight.setHours(0, 0, 0, 0);
+                const maxDate = new Date(todayMidnight);
+                maxDate.setMonth(maxDate.getMonth() + 2);
 
                 const calendarDays = [];
                 const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
 
                 for (let i = 0; i < firstDayIndex; i++) {
-                    calendarDays.push(<div key={`blank-${i}`} className="p-2"></div>);
+                    calendarDays.push(<div key={`blank-${i}`} className="p-1"></div>);
                 }
 
                 for (let d = 1; d <= daysInMonth; d++) {
                     const currentDate = new Date(year, month, d);
-                    currentDate.setHours(0, 0, 0, 0);
                     
-                    const isPast = currentDate < today;
+                    const earliestClassTime = new Date(year, month, d, 19, 0, 0);
+                    const isPast24Hours = earliestClassTime < twentyFourHoursLater;
+                    
+                    currentDate.setHours(0, 0, 0, 0);
                     const isTooFar = currentDate > maxDate;
+                    
                     const dayOfWeek = currentDate.getDay();
                     const isAvailableDay = dayOfWeek !== 1 && dayOfWeek !== 2; 
                     const dateStr = formatDate(currentDate);
-                    const isDayClosed = closedDays.includes(dateStr); // 判斷是否整天關閉
+                    const isDayClosed = closedDays.includes(dateStr); 
                     
-                    // 前台判斷：過去、太遠、一二休假、或是被特別關閉的都不能點
-                    const isBookable = !isPast && !isTooFar && isAvailableDay && !isDayClosed;
+                    const isBookable = !isPast24Hours && !isTooFar && isAvailableDay && !isDayClosed;
                     
-                    // 後台判斷：只要不是過去、太遠、一二休假，都可以點（即使被關閉了，後台也要能點擊來取消關閉）
-                    const isClickable = isAdmin ? (!isPast && !isTooFar && isAvailableDay) : isBookable;
-
+                    const isClickable = isAdmin ? (!isTooFar && isAvailableDay) : isBookable;
+                    
                     const isSelected = selectedDate && selectedDate.getDate() === d && selectedDate.getMonth() === month && selectedDate.getFullYear() === year;
 
                     calendarDays.push(
-                        <div key={d} className="flex justify-center py-1">
+                        <div key={d} className="flex justify-center py-0.5">
                             <button 
                                 disabled={!isClickable}
-                                onClick={() => { setSelectedDate(currentDate); setSelectedTime(null); }}
-                                className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-sans font-bold transition-all duration-300 select-none outline-none
-                                    ${!isClickable ? 'text-gray-300 cursor-not-allowed' : 
-                                      isSelected ? 'bg-[#4A3F35] text-white shadow-md border-2 border-[#4A3F35]' : 
-                                      (isAdmin && isDayClosed) ? 'text-gray-400 bg-gray-100 hover:border-gray-300 border-2 border-transparent' :
-                                      'text-[#4A3F35] bg-white border-2 border-transparent hover:border-[#E6DED5] hover:bg-[#FAF7F2]'}
-                                `}
+                                onClick={() => { 
+                                    setSelectedDate(currentDate); 
+                                    setSelectedTime(null); 
+                                    setStep(2); 
+                                    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                                }}
+                                className={`w-9 h-9 rounded-full flex items-center justify-center text-[15px] font-sans font-bold transition-all duration-300 select-none outline-none ${!isClickable ? 'text-gray-300 cursor-not-allowed' : isSelected ? 'bg-[#4A3F35] text-white shadow-md border-2 border-[#4A3F35]' : (isAdmin && isDayClosed) ? 'text-gray-400 bg-gray-100 hover:border-gray-300 border-2 border-transparent' : 'text-[#4A3F35] bg-white border-2 border-transparent hover:border-[#C19A6B] hover:bg-[#FAF7F2]'}`}
                             >
                                 {d}
                             </button>
@@ -339,136 +434,161 @@
                     );
                 }
 
-                const isCurrentDayClosed = selectedDate ? closedDays.includes(formatDate(selectedDate)) : false;
-
                 return (
-                    <div className="fade-in space-y-8 max-w-4xl mx-auto">
+                    <div className="fade-in space-y-4 max-w-md mx-auto">
                         {isAdmin && (
-                            <div className="mb-2 bg-accent-light border border-accent rounded-2xl p-4 text-center text-ink text-sm tracking-widest fade-in font-bold">
-                                🔧 後台管理模式：點擊下方時段即可自由切換「開放」或「關閉」。
+                            <div className="mb-2 bg-accent-light border border-accent rounded-2xl p-3 text-center text-ink text-xs tracking-widest fade-in font-bold">
+                                🔧 後台模式：點擊日期進入關閉時段設定。
                             </div>
                         )}
-                        <div className="text-center mb-10">
-                            <h2 className="text-2xl font-serif mb-3 text-ink tracking-wider font-bold">選擇上課時間</h2>
-                            <div className="flex items-center justify-center space-x-4 text-xs tracking-widest text-ink-light font-bold">
-                                <span className="flex items-center"><span className="w-3 h-3 rounded-full bg-white border-2 border-mocha mr-2"></span>可預約</span>
-                                <span className="flex items-center"><span className="w-3 h-3 rounded-full bg-gray-200 border-2 border-gray-300 mr-2"></span>已額滿</span>
+                        <div className="text-center mb-4">
+                            <h2 className="text-xl font-serif mb-2 text-ink tracking-wider font-bold">選擇上課日期</h2>
+                            <div className="flex items-center justify-center space-x-4 text-[11px] tracking-widest text-ink-light font-bold">
+                                <span className="flex items-center"><span className="w-2.5 h-2.5 rounded-full bg-white border-[1.5px] border-mocha mr-1.5"></span>可預約</span>
+                                <span className="flex items-center"><span className="w-2.5 h-2.5 rounded-full bg-gray-200 border-[1.5px] border-gray-300 mr-1.5"></span>已額滿</span>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                            <div className="md:col-span-2 p-6 line-border flex flex-col relative">
-                                <h3 className="text-lg font-serif mb-4 text-center tracking-widest border-b-2 border-mocha pb-4 font-bold text-ink">日期</h3>
-                                
-                                <div className="flex justify-between items-center mb-4 px-2 select-none">
-                                    <button onClick={prevMonth} className="p-1 text-ink-light hover:text-ink transition-colors outline-none">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                                    </button>
-                                    <span className="font-sans tracking-widest text-ink font-bold">{year}年 {month + 1}月</span>
-                                    <button onClick={nextMonth} className="p-1 text-ink-light hover:text-ink transition-colors outline-none">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-7 gap-1 mb-2 text-center text-xs text-ink-light tracking-widest border-b-2 border-mocha pb-2 font-bold select-none">
-                                    {weekDays.map(wd => <div key={wd}>{wd}</div>)}
-                                </div>
-                                <div className="grid grid-cols-7 gap-y-2 mt-2">
-                                    {calendarDays}
-                                </div>
+                        <div className="p-5 line-border flex flex-col relative bg-white shadow-sm">
+                            <div className="flex justify-between items-center mb-4 px-2 select-none">
+                                <button onClick={prevMonth} className="p-1.5 text-ink-light hover:text-ink transition-colors outline-none bg-milk rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                                </button>
+                                <span className="font-sans tracking-widest text-base text-ink font-bold">{year}年 {month + 1}月</span>
+                                <button onClick={nextMonth} className="p-1.5 text-ink-light hover:text-ink transition-colors outline-none bg-milk rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                                </button>
                             </div>
 
-                            <div className="md:col-span-3 p-6 line-border flex flex-col relative">
-                                <h3 className="text-lg font-serif mb-6 text-center tracking-widest border-b-2 border-mocha pb-4 font-bold text-ink">時段</h3>
-                                
-                                {!selectedDate ? (
-                                    <div className="flex-1 flex flex-col items-center justify-center text-ink-light min-h-[250px] select-none">
-                                        <p className="tracking-widest text-sm font-sans font-bold bg-milk px-6 py-3 rounded-full border border-mocha">請先從左側選擇日期</p>
+                            <div className="grid grid-cols-7 gap-1 mb-2 text-center text-xs text-ink-light tracking-widest border-b-2 border-mocha pb-2 font-bold select-none">
+                                {weekDays.map(wd => <div key={wd}>{wd}</div>)}
+                            </div>
+                            <div className="grid grid-cols-7 gap-y-1 mt-1">
+                                {calendarDays}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderStep2 = () => {
+                const isCurrentDayClosed = selectedDate ? closedDays.includes(formatDate(selectedDate)) : false;
+
+                return (
+                    <div className="fade-in max-w-md mx-auto">
+                        <div className="text-center mb-8">
+                            <h2 className="text-2xl font-serif mb-3 text-ink tracking-wider font-bold">選擇上課時段</h2>
+                            <p className="text-sm font-sans tracking-widest text-ink font-bold bg-milk inline-block px-5 py-2 rounded-full border border-mocha">
+                                已選日期：{formatDisplayDate(selectedDate)}
+                            </p>
+                        </div>
+
+                        <div className="p-8 line-border flex flex-col relative bg-white shadow-sm min-h-[300px]">
+                            {isAdmin && (
+                                <button
+                                    onClick={async () => {
+                                        const dateStr = formatDate(selectedDate);
+                                        const isClosing = !isCurrentDayClosed; 
+                                        
+                                        if (isClosing) {
+                                            setClosedDays([...closedDays, dateStr]);
+                                        } else {
+                                            setClosedDays(closedDays.filter(d => d !== dateStr));
+                                        }
+
+                                        if (GOOGLE_WEBHOOK_URL) {
+                                            try {
+                                                await fetch(GOOGLE_WEBHOOK_URL, {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                                    body: JSON.stringify({
+                                                        type: 'toggle_day',
+                                                        date: dateStr
+                                                    })
+                                                });
+                                            } catch(e) {
+                                                console.error("後台開關日期失敗", e);
+                                            }
+                                        }
+                                    }}
+                                    className={`w-full group relative flex items-center justify-between px-6 py-4 mb-6 border-2 transition-all duration-300 rounded-xl select-none outline-none ${isCurrentDayClosed ? 'bg-gray-100 border-gray-300 text-gray-500' : 'bg-white border-[#E6DED5] hover:border-red-300 hover:bg-red-50 text-[#4A3F35]'}`}
+                                >
+                                    <span className="text-base font-sans tracking-widest font-bold">
+                                        {isCurrentDayClosed ? '整天已關閉' : '關閉整天時段'}
+                                    </span>
+                                    <span className={`text-xs tracking-widest px-3 py-1.5 transition-colors rounded-lg font-bold ${isCurrentDayClosed ? 'bg-white text-gray-500 border-2 border-gray-300' : 'bg-white text-[#8C7E71] border-2 border-[#E6DED5] group-hover:border-red-400 group-hover:text-red-500'}`}>
+                                        {isCurrentDayClosed ? '點擊重新開放' : '點擊關閉'}
+                                    </span>
+                                </button>
+                            )}
+
+                            <div className={`space-y-4 flex-1 flex flex-col justify-center transition-opacity duration-300 ${isCurrentDayClosed ? 'opacity-30 pointer-events-none' : ''}`}>
+                                {isLoadingSlots ? (
+                                    <div className="flex justify-center items-center h-full min-h-[150px]">
+                                        <div className="loader border-[#E6DED5] border-top-[#4A3F35]"></div>
                                     </div>
                                 ) : (
-                                    <div className="flex-1 flex flex-col min-h-[250px]">
-                                        {/* 後台專用：關閉整天時段按鈕 */}
-                                        {isAdmin && (
+                                    TIME_SLOTS.map((time, idx) => {
+                                        const slotKey = `${formatDate(selectedDate)}-${time}`;
+                                        const isBooked = bookedSlots.includes(slotKey);
+                                        const isSelected = !isAdmin && selectedTime === time;
+
+                                        return (
                                             <button
-                                                onClick={() => {
-                                                    const dateStr = formatDate(selectedDate);
-                                                    if (isCurrentDayClosed) {
-                                                        setClosedDays(closedDays.filter(d => d !== dateStr));
+                                                key={idx}
+                                                disabled={!isAdmin && isBooked}
+                                                onClick={async () => {
+                                                    if (isAdmin) {
+                                                        const isClosingSlot = !isBooked;
+                                                        
+                                                        const newBooked = isClosingSlot ? [...bookedSlots, slotKey] : bookedSlots.filter(k => k !== slotKey);
+                                                        setBookedSlots(newBooked);
+                                                        
+                                                        if (GOOGLE_WEBHOOK_URL) {
+                                                            try {
+                                                                await fetch(GOOGLE_WEBHOOK_URL, {
+                                                                    method: 'POST',
+                                                                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                                                    body: JSON.stringify({
+                                                                        type: 'toggle_slot',
+                                                                        slot: slotKey
+                                                                    })
+                                                                });
+                                                            } catch(e) {
+                                                                console.error("後台開關單一時段失敗", e);
+                                                            }
+                                                        }
                                                     } else {
-                                                        setClosedDays([...closedDays, dateStr]);
+                                                        setSelectedTime(time);
                                                     }
                                                 }}
-                                                className={`w-full group relative flex items-center justify-between px-8 py-4 mb-6 border-2 transition-all duration-300 rounded-xl select-none outline-none
-                                                    ${isCurrentDayClosed 
-                                                        ? 'bg-gray-100 border-gray-300 text-gray-500' 
-                                                        : 'bg-white border-[#E6DED5] hover:border-red-300 hover:bg-red-50 text-[#4A3F35]'}
-                                                `}
+                                                className={`w-full group relative flex items-center justify-between px-8 py-5 border-2 transition-all duration-300 rounded-xl select-none outline-none ${isBooked ? (isAdmin ? 'bg-red-50 border-red-300 text-red-800' : 'bg-[#F3F4F6] border-[#E5E7EB] cursor-not-allowed opacity-70') : isSelected ? 'bg-[#F3EDE7] border-[#C19A6B] text-[#4A3F35] shadow-sm scale-[1.02]' : 'bg-white border-[#E6DED5] hover:border-[#C19A6B] hover:bg-[#FAF7F2] text-[#4A3F35]'}`}
                                             >
-                                                <span className="text-lg font-sans tracking-widest font-bold">
-                                                    {isCurrentDayClosed ? '整天已關閉' : '關閉整天時段'}
+                                                <span className={`text-xl font-sans tracking-widest font-bold transition-colors ${isBooked && !isAdmin ? 'line-through text-gray-400' : 'text-[#4A3F35]'}`}>
+                                                    {time}
                                                 </span>
-                                                <span className={`text-xs tracking-widest px-4 py-2 transition-colors rounded-lg font-bold
-                                                    ${isCurrentDayClosed 
-                                                        ? 'bg-white text-gray-500 border-2 border-gray-300' 
-                                                        : 'bg-white text-[#8C7E71] border-2 border-[#E6DED5] group-hover:border-red-400 group-hover:text-red-500'}
-                                                `}>
-                                                    {isCurrentDayClosed ? '點擊重新開放' : '點擊關閉'}
+                                                
+                                                <span className={`text-xs tracking-widest px-4 py-2 transition-colors rounded-lg font-bold ${isBooked ? (isAdmin ? '點擊開放' : '已額滿') : (isAdmin ? '點擊關閉' : (isSelected ? '已選擇' : '可預約'))} ${isSelected ? 'bg-[#C19A6B] text-white shadow-sm border-2 border-[#C19A6B]' : 'bg-white text-[#8C7E71] border-2 border-[#E6DED5] group-hover:border-[#C19A6B] group-hover:text-[#C19A6B]'}`}>
+                                                    {isBooked ? (isAdmin ? '點擊開放' : '已額滿') : (isAdmin ? '點擊關閉' : (isSelected ? '已選擇' : '可預約'))}
                                                 </span>
                                             </button>
-                                        )}
-
-                                        {/* 當整天被關閉時，下方時段變半透明不可點擊 */}
-                                        <div className={`space-y-4 flex-1 flex flex-col justify-center transition-opacity duration-300 ${isCurrentDayClosed ? 'opacity-30 pointer-events-none' : ''}`}>
-                                            {TIME_SLOTS.map((time, idx) => {
-                                                const slotKey = `${formatDate(selectedDate)}-${time}`;
-                                                const isBooked = bookedSlots.includes(slotKey);
-                                                const isSelected = !isAdmin && selectedTime === time;
-
-                                                return (
-                                                    <button
-                                                        key={idx}
-                                                        disabled={!isAdmin && isBooked}
-                                                        onClick={() => {
-                                                            if (isAdmin) {
-                                                                const newBooked = isBooked ? bookedSlots.filter(k => k !== slotKey) : [...bookedSlots, slotKey];
-                                                                setBookedSlots(newBooked);
-                                                            } else {
-                                                                setSelectedTime(time);
-                                                            }
-                                                        }}
-                                                        className={`w-full group relative flex items-center justify-between px-8 py-5 border-2 transition-all duration-300 rounded-xl select-none outline-none
-                                                            ${isBooked ? (isAdmin ? 'bg-red-50 border-red-300 text-red-800' : 'bg-[#F3F4F6] border-[#E5E7EB] cursor-not-allowed opacity-70') : 
-                                                              isSelected ? 'bg-[#F3EDE7] border-[#C19A6B] text-[#4A3F35] shadow-sm' : 'bg-white border-[#E6DED5] hover:border-[#C19A6B] hover:bg-[#FAF7F2] text-[#4A3F35]'}
-                                                        `}
-                                                    >
-                                                        <span className={`text-xl font-sans tracking-widest font-bold transition-colors 
-                                                            ${isBooked && !isAdmin ? 'line-through text-gray-400' : 'text-[#4A3F35]'}
-                                                        `}>
-                                                            {time}
-                                                        </span>
-                                                        
-                                                        <span className={`text-xs tracking-widest px-4 py-2 transition-colors rounded-lg font-bold
-                                                            ${isBooked ? (isAdmin ? 'bg-red-200 text-red-700' : 'bg-[#E5E7EB] text-[#9CA3AF] border-2 border-[#D1D5DB]') : 
-                                                              isSelected ? 'bg-[#C19A6B] text-white shadow-sm border-2 border-[#C19A6B]' : 'bg-white text-[#8C7E71] border-2 border-[#E6DED5] group-hover:border-[#C19A6B] group-hover:text-[#C19A6B]'}
-                                                        `}>
-                                                            {isBooked ? (isAdmin ? '點擊開放' : '已額滿') : (isAdmin ? '點擊關閉' : (isSelected ? '已選擇' : '可預約'))}
-                                                        </span>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>
 
-                        <div className="flex justify-end pt-8">
+                        <div className="flex justify-between items-center pt-8">
+                            <button 
+                                onClick={() => { setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors font-bold select-none outline-none px-2"
+                            >
+                                返回修改日期
+                            </button>
                             <button 
                                 onClick={handleNext}
-                                disabled={!isAdmin && (!selectedDate || !selectedTime)}
-                                className={`px-12 py-4 font-sans tracking-widest transition-all duration-300 rounded-full font-bold select-none outline-none
-                                    ${(!isAdmin && (!selectedDate || !selectedTime)) ? 'bg-[#E6DED5] text-[#8C7E71] border-2 border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-2 border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95 shadow-lg'}
-                                `}
+                                disabled={!isAdmin && !selectedTime}
+                                className={`px-10 py-3 font-sans tracking-widest transition-all duration-300 rounded-full font-bold select-none outline-none ${(!isAdmin && !selectedTime) ? 'bg-[#E6DED5] text-[#8C7E71] border-2 border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-2 border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95 shadow-lg'}`}
                             >
                                 下一步
                             </button>
@@ -477,17 +597,17 @@
                 );
             };
 
-            const renderStep2 = () => (
+            const renderStep3 = () => (
                 <div className="fade-in max-w-2xl mx-auto space-y-6">
                     <div className="p-6 line-border flex flex-col md:flex-row justify-between items-start md:items-center relative bg-white">
                         <div className="absolute left-0 top-0 bottom-0 w-2 bg-ink rounded-l-xl"></div>
                         <div className="pl-4">
                             <p className="text-xs tracking-widest text-ink-light mb-2 font-bold">已選擇時段</p>
                             <p className="font-sans text-xl tracking-wider text-ink font-bold">
-                                {formatDisplayDate(selectedDate)} <span className="mx-3 text-mocha">|</span> {selectedTime}
+                                {formatDisplayDate(selectedDate)} <span className="mx-3 text-mocha">|</span> {selectedTime || (isAdmin ? '無 (管理員模式)' : '')}
                             </p>
                         </div>
-                        <button onClick={() => setStep(1)} className="mt-4 md:mt-0 px-4 py-2 text-xs tracking-widest border-2 border-mocha hover:bg-milk hover:border-ink transition-colors text-ink rounded-lg font-bold select-none outline-none">
+                        <button onClick={() => { setStep(2); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="mt-4 md:mt-0 px-4 py-2 text-xs tracking-widest border-2 border-mocha hover:bg-milk hover:border-ink transition-colors text-ink rounded-lg font-bold select-none outline-none">
                             重新選擇時間
                         </button>
                     </div>
@@ -504,7 +624,7 @@
                                     value={formData.name}
                                     onChange={handleInputChange}
                                     className="w-full bg-milk border-2 border-mocha px-4 py-3 focus:outline-none focus:border-ink focus:bg-white transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl"
-                                    placeholder="請輸入您的稱呼"
+                                    placeholder="要怎麼稱呼您"
                                 />
                             </div>
                             <div>
@@ -518,20 +638,11 @@
                                     placeholder="將發送預約確認信至此信箱"
                                 />
                             </div>
+                            
                             <div className="pt-2">
                                 <label className="block text-sm tracking-widest text-ink mb-2 font-bold">選擇課程 <span className="text-accent">*</span></label>
-                                <div className="relative">
-                                    <select 
-                                        name="level"
-                                        value={formData.level}
-                                        onChange={handleInputChange}
-                                        className={`w-full bg-milk border-2 border-mocha px-4 py-3 appearance-none focus:outline-none focus:border-ink focus:bg-white transition-all cursor-pointer rounded-xl font-sans font-bold ${!formData.level ? 'text-gray-400' : 'text-ink'}`}
-                                    >
-                                        <option value="" disabled>請點擊選擇課程</option>
-                                        <option value="五十音發音課（零基礎）">五十音發音課（零基礎）</option>
-                                        <option value="N5文法會話課（初級日語）">N5文法會話課（初級日語）</option>
-                                        <option value="N4文法會話課（進階日語）">N4文法會話課（進階日語）</option>
-                                    </select>
+                                <div className="w-full bg-[#FAF7F2] border-2 border-[#E6DED5] px-4 py-3 text-ink font-sans font-bold rounded-xl opacity-80 cursor-not-allowed select-none">
+                                    已與老師確認過
                                 </div>
                             </div>
                         </div>
@@ -546,10 +657,8 @@
                         </button>
                         <button 
                             onClick={handleNext}
-                            disabled={!formData.name || !formData.email || !formData.level}
-                            className={`px-12 py-4 font-sans tracking-widest transition-all duration-300 rounded-full font-bold select-none outline-none
-                                ${(!formData.name || !formData.email || !formData.level) ? 'bg-[#E6DED5] text-[#8C7E71] border-2 border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-2 border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95 shadow-lg'}
-                            `}
+                            disabled={!formData.name || !formData.email}
+                            className={`px-12 py-4 font-sans tracking-widest transition-all duration-300 rounded-full font-bold select-none outline-none ${(!formData.name || !formData.email) ? 'bg-[#E6DED5] text-[#8C7E71] border-2 border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-2 border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95 shadow-lg'}`}
                         >
                             選擇方案
                         </button>
@@ -557,7 +666,7 @@
                 </div>
             );
 
-            const renderStep3 = () => {
+            const renderStep4 = () => {
                 const selectedPlanData = PLANS.find(p => p.id === formData.plan) || null;
                 const isPrepaid = formData.plan === 'prepaid';
 
@@ -611,7 +720,7 @@
                             )}
 
                             <button 
-                                onClick={() => window.location.reload()}
+                                onClick={resetAppToHome}
                                 className="w-full py-4 mt-2 bg-white text-ink border-2 border-mocha hover:border-ink hover:text-ink transition-colors font-sans tracking-widest text-sm rounded-full font-bold select-none shadow-sm outline-none"
                             >
                                 回到首頁
@@ -630,32 +739,26 @@
                                                 <button 
                                                     key={plan.id}
                                                     onClick={() => setFormData({...formData, plan: plan.id})}
-                                                    className={`w-full text-left cursor-pointer border-2 p-5 transition-all duration-300 relative flex justify-between items-center rounded-xl select-none outline-none
-                                                        ${isSelected ? 'border-[#C19A6B] bg-[#F3EDE7] shadow-md' : 'border-[#E6DED5] bg-white hover:border-[#C19A6B] hover:bg-[#FAF7F2]'}
-                                                    `}
+                                                    className={`w-full text-left cursor-pointer border-2 p-5 transition-all duration-300 relative flex justify-between items-center rounded-xl select-none outline-none ${isSelected ? 'border-[#C19A6B] bg-[#F3EDE7] shadow-md' : 'border-[#E6DED5] bg-white hover:border-[#C19A6B] hover:bg-[#FAF7F2]'}`}
                                                 >
                                                     <div className="flex flex-col pl-2">
                                                         <div className="flex items-center flex-wrap gap-2 mb-1">
                                                             <span className={`font-serif tracking-widest text-lg font-bold text-[#4A3F35]`}>{plan.name}</span>
                                                             {plan.tag && (
-                                                                <span className={`text-[10px] px-2 py-1 rounded-md font-bold transition-colors shadow-sm
-                                                                    ${plan.id === 'prepaid' ? 
-                                                                        (isSelected ? 'bg-[#C19A6B] text-white' : 'bg-[#FAF7F2] text-[#8C7E71] border border-[#E6DED5]') : 
-                                                                        'bg-[#FFF0E6] text-[#E85D04] border border-[#FFDACC]'} 
-                                                                `}>
+                                                                <span className={`text-[10px] px-2 py-1 rounded-md font-bold transition-colors shadow-sm ${plan.id === 'prepaid' ? (isSelected ? 'bg-[#C19A6B] text-white' : 'bg-[#FAF7F2] text-[#8C7E71] border border-[#E6DED5]') : 'bg-[#FFF0E6] text-[#E85D04] border border-[#FFDACC]'}`}>
                                                                     {plan.tag}
                                                                 </span>
                                                             )}
                                                         </div>
                                                         {plan.originalPrice && (
-                                                            <span className="text-[11px] text-[#8C7E71] tracking-widest line-through mt-1 font-sans">原價 NT$ {plan.originalPrice}</span>
+                                                            <span className="text-[11px] text-[#8C7E71] tracking-widest line-through mt-1 font-sans">原價 NT$ {plan.originalPrice.toLocaleString()}</span>
                                                         )}
                                                     </div>
-                                                    <div className="text-right">
+                                                    <div className="text-right flex-shrink-0 ml-4">
                                                         {plan.price > 0 ? (
-                                                            <span className={`text-xl font-sans tracking-wider font-bold ${isSelected ? 'text-[#C19A6B]' : 'text-[#4A3F35]'}`}>NT$ {plan.price}</span>
+                                                            <span className={`text-xl font-sans tracking-wider font-bold whitespace-nowrap ${isSelected ? 'text-[#C19A6B]' : 'text-[#4A3F35]'}`}>NT${plan.price.toLocaleString()}</span>
                                                         ) : (
-                                                            <span className={`text-sm font-sans tracking-wider font-bold ${isSelected ? 'text-[#C19A6B]' : 'text-[#4A3F35]'}`}>無須付費</span>
+                                                            <span className={`text-sm font-sans tracking-wider font-bold whitespace-nowrap ${isSelected ? 'text-[#C19A6B]' : 'text-[#4A3F35]'}`}>無須付費</span>
                                                         )}
                                                     </div>
                                                 </button>
@@ -694,7 +797,7 @@
                                         
                                         <div className="flex justify-between items-end mb-6">
                                             <span className="font-sans text-sm tracking-widest text-ink-light font-bold">總計</span>
-                                            <span className="text-3xl font-sans text-ink tracking-wider font-bold">NT$ {selectedPlanData.price}</span>
+                                            <span className="text-3xl font-sans text-ink tracking-wider font-bold whitespace-nowrap">NT${selectedPlanData.price.toLocaleString()}</span>
                                         </div>
 
                                         {errorMsg && (
@@ -712,11 +815,7 @@
                                             <button 
                                                 onClick={handlePayment}
                                                 disabled={isPrepaid && !formData.prepaidCode}
-                                                className={`w-full py-4 transition-all duration-300 font-sans tracking-widest flex items-center justify-center text-base rounded-full shadow-md font-bold select-none outline-none border-2
-                                                    ${isPrepaid ? 
-                                                        (!formData.prepaidCode ? 'bg-[#E6DED5] border-[#D4C4B7] text-[#8C7E71] cursor-not-allowed shadow-none' : 'bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95') 
-                                                        : 'bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95'}
-                                                `}
+                                                className={`w-full py-4 transition-all duration-300 font-sans tracking-widest flex items-center justify-center text-base rounded-full shadow-md font-bold select-none outline-none border-2 ${isPrepaid ? (!formData.prepaidCode ? 'bg-[#E6DED5] border-[#D4C4B7] text-[#8C7E71] cursor-not-allowed shadow-none' : 'bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95') : 'bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95'}`}
                                             >
                                                 {isPrepaid ? '提交預約申請' : '前往結帳'}
                                             </button>
@@ -775,33 +874,44 @@
                         </div>
                     )}
 
-                    <header className="pt-16 pb-8 text-center relative select-none">
+                    <header className="pt-6 pb-4 text-center relative select-none">
                         <button 
                             onClick={() => isAdmin ? setIsAdmin(false) : setShowLogin(true)}
-                            className="absolute top-4 right-4 md:top-8 md:right-8 text-xs text-ink tracking-widest border-2 border-mocha hover:border-ink hover:text-ink hover:bg-milk px-5 py-2.5 rounded-full transition-all bg-white font-bold shadow-sm outline-none"
+                            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-ink-light border-2 border-transparent hover:border-mocha hover:text-ink hover:bg-white rounded-full transition-all font-bold outline-none"
+                            title={isAdmin ? '登出後台' : '進入後台'}
                         >
-                            {isAdmin ? '登出後台' : '進入後台'}
+                            {isAdmin ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            )}
                         </button>
-                        <h1 className="text-4xl md:text-5xl font-serif text-ink tracking-[0.15em] font-bold">日文老鳥</h1>
-                        <p className="text-[10px] md:text-xs font-sans tracking-[0.4em] text-ink-light uppercase flex items-center justify-center mt-5 font-bold">
-                            <span className="w-10 h-[2px] bg-mocha mr-4"></span>
+                        <h1 className="text-3xl md:text-4xl font-serif text-ink tracking-[0.15em] font-bold">日文老鳥</h1>
+                        <p className="text-[10px] md:text-[12px] font-sans tracking-[0.4em] text-ink-light uppercase flex items-center justify-center mt-3 font-bold">
+                            <span className="w-8 h-[2px] bg-mocha mr-3"></span>
                             日語線上家教 Vivi老師
-                            <span className="w-10 h-[2px] bg-mocha ml-4"></span>
+                            <span className="w-8 h-[2px] bg-mocha ml-3"></span>
                         </p>
                     </header>
 
-                    <main className="flex-1 container mx-auto px-4 max-w-5xl pb-24 pt-4">
+                    <main className="flex-1 container mx-auto px-4 max-w-5xl pb-10 pt-2 flex flex-col justify-center">
                         {!paymentSuccess && <StepIndicator currentStep={step} />}
 
-                        <div className="transition-all duration-500">
+                        <div className="transition-all duration-500 w-full">
                             {step === 1 && renderStep1()}
                             {step === 2 && renderStep2()}
                             {step === 3 && renderStep3()}
+                            {step === 4 && renderStep4()}
                         </div>
                     </main>
 
-                    <footer className="py-10 text-center border-t-2 border-mocha">
-                        <p className="text-xs text-ink-light font-sans tracking-[0.2em] font-bold select-none">
+                    <footer className="py-4 text-center border-t-2 border-mocha mt-auto">
+                        <p className="text-[10px] text-ink-light font-sans tracking-[0.2em] font-bold select-none">
                             &copy; 2026 objapanese
                         </p>
                     </footer>
