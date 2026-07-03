@@ -40,11 +40,11 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@400;500;700&display=swap');
         
         * {
-            -webkit-tap-highlight-color: transparent;
+            -webkit-tap-highlight-color: transparent; /* 徹底移除手機點擊反白框 */
         }
 
         body {
-            background-color: #FAF7F2;
+            background-color: #FAF7F2; /* 奶咖底色 */
             background-image: 
                 linear-gradient(rgba(212, 196, 183, 0.25) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(212, 196, 183, 0.25) 1px, transparent 1px);
@@ -56,6 +56,7 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #E6DED5; border-radius: 4px; }
 
+        /* 純實體白底卡片，無任何玻璃效果 */
         .line-border { 
             background-color: #FFFFFF;
             border: 2px solid #E6DED5;
@@ -82,23 +83,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        
-        /* 確保方案名稱與標籤同行 */
-        .plan-title-container {
-            display: flex;
-            align-items: center;
-            flex-wrap: nowrap;
-            white-space: nowrap;
-            width: 100%;
-        }
     </style>
 </head>
 <body>
@@ -111,7 +95,6 @@
 
         const TIME_SLOTS = ["19:00~19:50", "20:00~20:50", "21:00~21:50"];
 
-        // 更新文案為「每堂只要 NT$OO」
         const PLANS = [
             { id: '1', name: '單堂課程', price: 700, originalPrice: null, tag: '', subtitle: '' },
             { id: '8', name: '8堂課程包', price: 4800, originalPrice: 5600, tag: '', subtitle: '每堂只要 NT$600' },
@@ -452,7 +435,7 @@
                 }
 
                 return (
-                    <div className="fade-in space-y-4 max-w-md mx-auto relative">
+                    <div className="fade-in space-y-4 max-w-md mx-auto">
                         {isAdmin && (
                             <div className="mb-2 bg-accent-light border border-accent rounded-2xl p-3 text-center text-ink text-xs tracking-widest fade-in font-bold">
                                 🔧 後台模式：點擊日期進入關閉時段設定。
@@ -485,12 +468,13 @@
                             </div>
                         </div>
 
-                        <div className="flex justify-center mt-6 fade-in">
+                        {/* LINE 加入好友按鈕 (僅顯示於第一步) */}
+                        <div className="flex justify-center mt-6">
                             <a 
                                 href="https://lin.ee/OYIH1YB" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="hover:scale-[1.03] active:scale-95 transition-transform inline-block"
+                                className="hover:scale-105 active:scale-95 transition-transform drop-shadow-sm inline-block"
                                 title="加入 LINE 好友"
                             >
                                 <img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" alt="加入好友" style={{ height: '25px' }} border="0" />
@@ -729,7 +713,7 @@
                                         <p>綠界結帳畫面已在<strong className="text-ink text-lg mx-1">新分頁</strong>開啟<br/>
                                         請前往完成付款，完成後可關閉此網頁</p>
                                         <span className="text-sm mt-6 mb-2 inline-block text-ink border-2 border-mocha bg-milk px-5 py-4 rounded-xl text-left">
-                                            🔔 完成付款後，請麻煩告知老師！<br/>確認款項後，將會傳送預約資訊與上課連結。
+                                            🔔 完成付款後，請麻煩告知老師！<br/>確認收到款項後，預約資訊與上課連結將會傳給您。
                                         </span>
                                     </React.Fragment>
                                 )}
@@ -768,51 +752,49 @@
                                                 <button 
                                                     key={plan.id}
                                                     onClick={() => setFormData({...formData, plan: plan.id})}
-                                                    className={`w-full text-left cursor-pointer border-2 p-3 md:p-5 transition-all duration-300 relative flex justify-between items-center rounded-xl select-none outline-none ${isSelected ? 'border-[#C19A6B] bg-[#F3EDE7] shadow-md' : 'border-[#E6DED5] bg-white hover:border-[#C19A6B] hover:bg-[#FAF7F2]'}`}
+                                                    className={`w-full text-left cursor-pointer border-2 p-5 transition-all duration-300 relative flex justify-between items-center rounded-xl select-none outline-none ${isSelected ? 'border-[#C19A6B] bg-[#F3EDE7] shadow-md' : 'border-[#E6DED5] bg-white hover:border-[#C19A6B] hover:bg-[#FAF7F2]'}`}
                                                 >
-                                                    {/* 使用 min-w-0 防止被 Flex 子元素撐爆，讓字體能順利縮小 */}
-                                                    <div className="flex flex-col flex-1 min-w-0 pr-1 md:pr-2">
-                                                        {/* 利用 whitespace-nowrap 強制同行，搭配 clamp 依照螢幕寬度縮小 */}
-                                                        <div className="plan-title-container gap-1 md:gap-2 mb-1">
-                                                            <span className="font-serif font-bold text-[#4A3F35] flex items-center shrink-0" style={{ fontSize: 'clamp(14px, 3.5vw, 20px)' }}>
+                                                    <div className="flex flex-col pl-2">
+                                                        <div className="flex items-center flex-wrap gap-2 mb-1">
+                                                            <span className={`font-serif tracking-widest text-xl font-bold text-[#4A3F35] flex items-center flex-wrap`}>
                                                                 {plan.name.split(/(\d+)/).map((part, i) => 
                                                                     /\d+/.test(part) ? 
-                                                                    <span key={i} className="font-sans font-black italic text-[#C19A6B] mr-0.5 tracking-normal leading-none drop-shadow-sm" style={{ fontSize: part === '20' ? 'clamp(18px, 4vw, 24px)' : 'clamp(20px, 4.5vw, 26px)' }}>{part}</span> : 
+                                                                    <span key={i} className={`font-sans font-black italic text-[#C19A6B] mr-0.5 tracking-normal leading-none drop-shadow-sm ${part === '20' ? 'text-[24px]' : 'text-[26px]'}`}>{part}</span> : 
                                                                     part
                                                                 )}
                                                             </span>
                                                             
-                                                            <div className="flex gap-1 md:gap-2 items-center shrink-0">
+                                                            <div className="flex gap-2 items-center flex-wrap mt-1">
                                                                 {plan.tag && (
-                                                                    <span className={`px-1.5 py-1 md:px-3 md:py-1.5 rounded-md font-bold transition-colors shadow-sm shrink-0 ${
+                                                                    <span className={`text-[11.5px] px-3 py-1.5 rounded-md font-bold transition-colors shadow-sm ${
                                                                         isSelected 
                                                                         ? 'bg-[#C19A6B] text-white' 
                                                                         : `bg-[#FAF7F2] border border-[#E6DED5] text-[#8C7E71]`
-                                                                    }`} style={{ fontSize: 'clamp(10px, 2.2vw, 11.5px)' }}>
+                                                                    }`}>
                                                                         {plan.tag}
                                                                     </span>
                                                                 )}
                                                                 {plan.subtitle && (
-                                                                    <span className={`px-1.5 py-1 md:px-3 md:py-1.5 rounded-md font-bold transition-colors shadow-sm shrink-0 ${
+                                                                    <span className={`text-[11.5px] px-3 py-1.5 rounded-md font-bold transition-colors shadow-sm ${
                                                                         isSelected 
                                                                         ? 'bg-[#C19A6B] text-white' 
                                                                         : 'bg-[#FAF7F2] border border-[#E6DED5] text-red-500'
-                                                                    }`} style={{ fontSize: 'clamp(10px, 2.2vw, 11.5px)' }}>
+                                                                    }`}>
                                                                         {plan.subtitle}
                                                                     </span>
                                                                 )}
                                                             </div>
+
                                                         </div>
                                                         {plan.originalPrice && (
-                                                            <span className="text-[#8C7E71] tracking-widest line-through mt-0.5 font-sans" style={{ fontSize: 'clamp(10px, 2vw, 11px)' }}>原價 NT$ {plan.originalPrice.toLocaleString()}</span>
+                                                            <span className="text-[11px] text-[#8C7E71] tracking-widest line-through mt-1 font-sans">原價 NT$ {plan.originalPrice.toLocaleString()}</span>
                                                         )}
                                                     </div>
-                                                    
-                                                    <div className="text-right flex-shrink-0 ml-1 md:ml-2">
+                                                    <div className="text-right flex-shrink-0 ml-4">
                                                         {plan.price > 0 ? (
-                                                            <span className={`font-sans tracking-wider font-bold whitespace-nowrap ${isSelected ? 'text-[#C19A6B]' : 'text-[#4A3F35]'}`} style={{ fontSize: 'clamp(14px, 4vw, 20px)' }}>NT${plan.price.toLocaleString()}</span>
+                                                            <span className={`text-xl font-sans tracking-wider font-bold whitespace-nowrap ${isSelected ? 'text-[#C19A6B]' : 'text-[#4A3F35]'}`}>NT${plan.price.toLocaleString()}</span>
                                                         ) : (
-                                                            <span className={`text-xs md:text-sm font-sans tracking-wider font-bold whitespace-nowrap ${isSelected ? 'text-[#C19A6B]' : 'text-[#4A3F35]'}`}>無須付費</span>
+                                                            <span className={`text-sm font-sans tracking-wider font-bold whitespace-nowrap ${isSelected ? 'text-[#C19A6B]' : 'text-[#4A3F35]'}`}>無須付費</span>
                                                         )}
                                                     </div>
                                                 </button>
@@ -945,11 +927,7 @@
                                 </svg>
                             )}
                         </button>
-                        
-                        <button onClick={resetAppToHome} className="inline-block hover:scale-[1.02] active:scale-95 transition-transform outline-none cursor-pointer" title="回首頁">
-                            <h1 className="text-3xl md:text-4xl font-serif text-ink tracking-[0.15em] font-bold">日文老鳥</h1>
-                        </button>
-                        
+                        <h1 className="text-3xl md:text-4xl font-serif text-ink tracking-[0.15em] font-bold">日文老鳥</h1>
                         <p className="text-[10px] md:text-[12px] font-sans tracking-[0.4em] text-ink-light uppercase flex items-center justify-center mt-3 font-bold">
                             <span className="w-8 h-[2px] bg-mocha mr-3"></span>
                             日語線上家教 Vivi老師
