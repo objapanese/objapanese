@@ -581,7 +581,7 @@
                                                     {time}
                                                 </span>
                                                 
-                                                <span className={`text-xs tracking-widest px-4 py-2 transition-colors rounded-lg font-bold ${isBooked ? (isAdmin ? '點擊開放' : '已額滿') : (isAdmin ? '點擊關閉' : (isSelected ? '已選擇' : '可預約'))} ${isSelected ? 'bg-[#C19A6B] text-white shadow-sm border-2 border-[#C19A6B]' : 'bg-white text-[#8C7E71] border-2 border-[#E6DED5] group-hover:border-[#C19A6B] group-hover:text-[#C19A6B]'}`}>
+                                                <span className={`text-xs tracking-widest px-4 py-2 transition-colors rounded-lg font-bold whitespace-nowrap ${isBooked ? (isAdmin ? '點擊開放' : '已額滿') : (isAdmin ? '點擊關閉' : (isSelected ? '已選擇' : '可預約'))} ${isSelected ? 'bg-[#C19A6B] text-white shadow-sm border-2 border-[#C19A6B]' : 'bg-white text-[#8C7E71] border-2 border-[#E6DED5] group-hover:border-[#C19A6B] group-hover:text-[#C19A6B]'}`}>
                                                     {isBooked ? (isAdmin ? '點擊開放' : '已額滿') : (isAdmin ? '點擊關閉' : (isSelected ? '已選擇' : '可預約'))}
                                                 </span>
                                             </button>
@@ -927,7 +927,13 @@
                                 </svg>
                             )}
                         </button>
-                        <h1 className="text-3xl md:text-4xl font-serif text-ink tracking-[0.15em] font-bold">日文老鳥</h1>
+                        <h1 
+                            className="text-3xl md:text-4xl font-serif text-ink tracking-[0.15em] font-bold cursor-pointer hover:opacity-80 transition-opacity inline-block"
+                            onClick={resetAppToHome}
+                            title="回到首頁"
+                        >
+                            日文老鳥
+                        </h1>
                         <p className="text-[10px] md:text-[12px] font-sans tracking-[0.4em] text-ink-light uppercase flex items-center justify-center mt-3 font-bold">
                             <span className="w-8 h-[2px] bg-mocha mr-3"></span>
                             日語線上家教 Vivi老師
