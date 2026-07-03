@@ -96,10 +96,10 @@
         const TIME_SLOTS = ["19:00~19:50", "20:00~20:50", "21:00~21:50"];
 
         const PLANS = [
-            { id: '1', name: '單堂課程', price: 700, originalPrice: null, tag: '' },
-            { id: '4', name: '4堂課程包', price: 2600, originalPrice: 2800, tag: '一堂課只要650元' },
-            { id: '8', name: '8堂課程包', price: 4800, originalPrice: 5600, tag: '一堂課只要600元' },
-            { id: 'prepaid', name: '使用已購課程包預約', price: 0, originalPrice: null, tag: '請輸入專屬代碼' }
+            { id: '1', name: '單堂課程', price: 700, originalPrice: null, tag: '', subtitle: '' },
+            { id: '8', name: '8堂課程包', price: 4800, originalPrice: 5600, tag: '', subtitle: '每堂只要 NT$600' },
+            { id: '20', name: '20堂課程包', price: 11000, originalPrice: 14000, tag: '', subtitle: '每堂只要 NT$550' },
+            { id: 'prepaid', name: '使用已購課程包預約', price: 0, originalPrice: null, tag: '請輸入專屬代碼', subtitle: '' }
         ];
 
         const formatDate = (date) => {
@@ -165,7 +165,7 @@
             const [selectedDate, setSelectedDate] = useState(null);
             const [selectedTime, setSelectedTime] = useState(null);
             
-            const [formData, setFormData] = useState({ name: '', email: '', level: '已與老師確認過', plan: '', prepaidCode: '' });
+            const [formData, setFormData] = useState({ name: '', email: '', level: '已與老師聯絡', plan: '', prepaidCode: '' });
             
             const [isPaying, setIsPaying] = useState(false);
             const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -177,7 +177,7 @@
                 setStep(1);
                 setSelectedDate(null);
                 setSelectedTime(null);
-                setFormData({ name: '', email: '', level: '已與老師確認過', plan: '', prepaidCode: '' });
+                setFormData({ name: '', email: '', level: '已與老師聯絡', plan: '', prepaidCode: '' });
                 setIsPaying(false);
                 setPaymentSuccess(false);
                 setRemainingClasses(null);
@@ -291,8 +291,8 @@
                 if (formData.plan !== 'prepaid') {
                     let paymentUrl = '';
                     if (formData.plan === '1') paymentUrl = 'https://p.ecpay.com.tw/6032D8C';
-                    else if (formData.plan === '4') paymentUrl = 'https://p.ecpay.com.tw/8510797';
                     else if (formData.plan === '8') paymentUrl = 'https://p.ecpay.com.tw/8D937B9';
+                    else if (formData.plan === '20') paymentUrl = 'https://p.ecpay.com.tw/5B755BA';
 
                     if (paymentUrl) {
                         newWindow = window.open(paymentUrl, '_blank');
@@ -466,6 +466,19 @@
                             <div className="grid grid-cols-7 gap-y-1 mt-1">
                                 {calendarDays}
                             </div>
+                        </div>
+
+                        {/* LINE 加入好友按鈕 (僅顯示於第一步) */}
+                        <div className="flex justify-center mt-6">
+                            <a 
+                                href="https://lin.ee/OYIH1YB" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="hover:scale-105 active:scale-95 transition-transform drop-shadow-sm inline-block"
+                                title="加入 LINE 好友"
+                            >
+                                <img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" alt="加入好友" style={{ height: '25px' }} border="0" />
+                            </a>
                         </div>
                     </div>
                 );
@@ -642,7 +655,7 @@
                             <div className="pt-2">
                                 <label className="block text-sm tracking-widest text-ink mb-2 font-bold">選擇課程 <span className="text-accent">*</span></label>
                                 <div className="w-full bg-[#FAF7F2] border-2 border-[#E6DED5] px-4 py-3 text-ink font-sans font-bold rounded-xl opacity-80 cursor-not-allowed select-none">
-                                    已與老師確認過
+                                    已與老師聯絡
                                 </div>
                             </div>
                         </div>
@@ -699,8 +712,8 @@
                                     <React.Fragment>
                                         <p>綠界結帳畫面已在<strong className="text-ink text-lg mx-1">新分頁</strong>開啟<br/>
                                         請前往完成付款，完成後可關閉此網頁</p>
-                                        <span className="text-sm mt-6 mb-2 inline-block text-ink border-2 border-mocha bg-milk px-5 py-4 rounded-xl">
-                                            🔔 確認收到款項後，預約資訊與上課連結將會傳給您！<br/>若有任何問題隨時歡迎請與老師聯絡。
+                                        <span className="text-sm mt-6 mb-2 inline-block text-ink border-2 border-mocha bg-milk px-5 py-4 rounded-xl text-left">
+                                            🔔 完成付款後，請麻煩告知老師！<br/>確認收到款項後，預約資訊與上課連結將會傳給您。
                                         </span>
                                     </React.Fragment>
                                 )}
@@ -709,7 +722,7 @@
                             {!isPrepaid && (
                                 <div className="mb-8">
                                     <a 
-                                        href={formData.plan === '1' ? 'https://p.ecpay.com.tw/6032D8C' : formData.plan === '4' ? 'https://p.ecpay.com.tw/8510797' : 'https://p.ecpay.com.tw/8D937B9'} 
+                                        href={formData.plan === '1' ? 'https://p.ecpay.com.tw/6032D8C' : formData.plan === '8' ? 'https://p.ecpay.com.tw/8D937B9' : 'https://p.ecpay.com.tw/5B755BA'} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
                                         className="text-xs text-ink-light border-b border-ink-light hover:text-ink hover:border-ink transition-colors pb-1 font-bold"
@@ -729,7 +742,7 @@
                     ) : (
                         <div className="space-y-6">
                             <div className="p-8 line-border bg-white relative">
-                                <h3 className="text-xl font-serif mb-8 text-center tracking-widest border-b-2 border-mocha pb-4 text-ink font-bold">選擇購買方案</h3>
+                                <h3 className="text-xl font-serif mb-8 text-center tracking-widest border-b-2 border-mocha pb-4 text-ink font-bold">選擇課程方案</h3>
                                 
                                 <div className="mb-8">
                                     <div className="space-y-4">
@@ -743,12 +756,35 @@
                                                 >
                                                     <div className="flex flex-col pl-2">
                                                         <div className="flex items-center flex-wrap gap-2 mb-1">
-                                                            <span className={`font-serif tracking-widest text-lg font-bold text-[#4A3F35]`}>{plan.name}</span>
-                                                            {plan.tag && (
-                                                                <span className={`text-[10px] px-2 py-1 rounded-md font-bold transition-colors shadow-sm ${plan.id === 'prepaid' ? (isSelected ? 'bg-[#C19A6B] text-white' : 'bg-[#FAF7F2] text-[#8C7E71] border border-[#E6DED5]') : 'bg-[#FFF0E6] text-[#E85D04] border border-[#FFDACC]'}`}>
-                                                                    {plan.tag}
-                                                                </span>
-                                                            )}
+                                                            <span className={`font-serif tracking-widest text-xl font-bold text-[#4A3F35] flex items-center flex-wrap`}>
+                                                                {plan.name.split(/(\d+)/).map((part, i) => 
+                                                                    /\d+/.test(part) ? 
+                                                                    <span key={i} className={`font-sans font-black italic text-[#C19A6B] mr-0.5 tracking-normal leading-none drop-shadow-sm ${part === '20' ? 'text-[24px]' : 'text-[26px]'}`}>{part}</span> : 
+                                                                    part
+                                                                )}
+                                                            </span>
+                                                            
+                                                            <div className="flex gap-2 items-center flex-wrap mt-1">
+                                                                {plan.tag && (
+                                                                    <span className={`text-[11.5px] px-3 py-1.5 rounded-md font-bold transition-colors shadow-sm ${
+                                                                        isSelected 
+                                                                        ? 'bg-[#C19A6B] text-white' 
+                                                                        : `bg-[#FAF7F2] border border-[#E6DED5] text-[#8C7E71]`
+                                                                    }`}>
+                                                                        {plan.tag}
+                                                                    </span>
+                                                                )}
+                                                                {plan.subtitle && (
+                                                                    <span className={`text-[11.5px] px-3 py-1.5 rounded-md font-bold transition-colors shadow-sm ${
+                                                                        isSelected 
+                                                                        ? 'bg-[#C19A6B] text-white' 
+                                                                        : 'bg-[#FAF7F2] border border-[#E6DED5] text-red-500'
+                                                                    }`}>
+                                                                        {plan.subtitle}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+
                                                         </div>
                                                         {plan.originalPrice && (
                                                             <span className="text-[11px] text-[#8C7E71] tracking-widest line-through mt-1 font-sans">原價 NT$ {plan.originalPrice.toLocaleString()}</span>
