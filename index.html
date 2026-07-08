@@ -232,8 +232,9 @@
                 let interval;
                 
                 const fetchBookedSlots = async () => {
-                    if (Date.now() - lastLocalUpdate.current < 5000) {
-                        return; // 若剛在後台更新過狀態，暫停 5 秒抓取，避免伺服器舊資料覆蓋本地
+                    // 延長暫停同步時間為 15 秒，避免剛在後台更新完，伺服器還沒處理好就抓舊資料覆蓋
+                    if (Date.now() - lastLocalUpdate.current < 15000) {
+                        return; 
                     }
                     if (!GOOGLE_WEBHOOK_URL) {
                         if (bookedSlots.length === 0) setBookedSlots(initialBookedSlots);
@@ -243,6 +244,7 @@
                     try {
                         const response = await fetch(GOOGLE_WEBHOOK_URL, {
                             method: 'POST',
+                            redirect: 'follow',
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify({ type: 'get_slots' })
                         });
@@ -309,6 +311,7 @@
                         try {
                             const response = await fetch(GOOGLE_WEBHOOK_URL, {
                                 method: 'POST',
+                                redirect: 'follow',
                                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                                 body: JSON.stringify({
                                     type: 'book_class',
@@ -356,6 +359,7 @@
                             const selectedPlanName = PURCHASE_PLANS.find(p => p.id === formData.plan)?.name || '';
                             fetch(GOOGLE_WEBHOOK_URL, {
                                 method: 'POST',
+                                redirect: 'follow',
                                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                                 body: JSON.stringify({
                                     type: 'new_purchase', 
@@ -761,6 +765,7 @@
                                             try {
                                                 await fetch(GOOGLE_WEBHOOK_URL, {
                                                     method: 'POST',
+                                                    redirect: 'follow',
                                                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                                                     body: JSON.stringify({ type: 'toggle_day', date: dateStr })
                                                 });
@@ -802,6 +807,7 @@
                                                             try {
                                                                 await fetch(GOOGLE_WEBHOOK_URL, {
                                                                     method: 'POST',
+                                                                    redirect: 'follow',
                                                                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                                                                     body: JSON.stringify({ type: 'toggle_slot', slot: slotKey })
                                                                 });
@@ -973,6 +979,8 @@
                             onClick={() => {
                                 if (isAdmin) {
                                     setIsAdmin(false);
+                                    // 登出時重置最後更新時間，確保本地資料在 15 秒內不會被伺服器舊資料覆蓋
+                                    lastLocalUpdate.current = Date.now();
                                     // 登出後停留在預約模式第一步 (日曆頁面)，不跳回首頁
                                     setMode('book');
                                     setStep(1);
