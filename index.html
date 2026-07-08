@@ -89,7 +89,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useEffect, useMemo, useRef } = React;
 
         const GOOGLE_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyetnlJlnFp8atdReeRS4Rx8bA1IVDVialahLq2iHj4ARTGLAXWcgEE0otjH-edDub9mQ/exec';
 
@@ -120,9 +120,8 @@
             currentDate.setHours(currentDate.getHours() + 24);
 
             let validDaysCount = 0;
-            for (let i = 0; i < 90; i++) { 
+            for (let i = 0; i < 60; i++) { 
                 const dayOfWeek = currentDate.getDay();
-                // 排除 0(日), 1(一), 2(二)
                 if (dayOfWeek >= 3 && dayOfWeek <= 6) {
                     if (validDaysCount === 0) slots.push(`${formatDate(currentDate)}-19:00~19:50`);
                     if (validDaysCount === 1) slots.push(`${formatDate(currentDate)}-21:00~21:50`);
@@ -205,15 +204,20 @@
             const initialBookedSlots = useMemo(() => generateDemoBookedSlots(), []);
             
             const [bookedSlots, setBookedSlots] = useState(() => {
-                const saved = localStorage.getItem('japanese_tutor_booked_slots');
-                return saved ? JSON.parse(saved) : [];
+                try {
+                    const saved = localStorage.getItem('japanese_tutor_booked_slots');
+                    return saved ? (JSON.parse(saved) || []) : [];
+                } catch(e) { return []; }
             });
             const [closedDays, setClosedDays] = useState(() => {
-                const saved = localStorage.getItem('japanese_tutor_closed_days');
-                return saved ? JSON.parse(saved) : [];
+                try {
+                    const saved = localStorage.getItem('japanese_tutor_closed_days');
+                    return saved ? (JSON.parse(saved) || []) : [];
+                } catch(e) { return []; }
             });
             
             const [isLoadingSlots, setIsLoadingSlots] = useState(true);
+            const lastLocalUpdate = useRef(0);
 
             useEffect(() => {
                 localStorage.setItem('japanese_tutor_booked_slots', JSON.stringify(bookedSlots));
@@ -228,6 +232,9 @@
                 let interval;
                 
                 const fetchBookedSlots = async () => {
+                    if (Date.now() - lastLocalUpdate.current < 5000) {
+                        return; // 若剛在後台更新過狀態，暫停 5 秒抓取，避免伺服器舊資料覆蓋本地
+                    }
                     if (!GOOGLE_WEBHOOK_URL) {
                         if (bookedSlots.length === 0) setBookedSlots(initialBookedSlots);
                         setIsLoadingSlots(false);
@@ -245,11 +252,10 @@
                         try { result = JSON.parse(text); } catch (e) {}
 
                         if (result) {
-                            // 直接使用後端回傳的新資料覆蓋，解決 Google 日曆刪除後前端仍鎖定的問題
-                            if (result.slots) {
+                            if (Array.isArray(result.slots)) {
                                  setBookedSlots(result.slots);
                             }
-                            if (result.closedDays) {
+                            if (Array.isArray(result.closedDays)) {
                                  setClosedDays(result.closedDays);
                             }
                         }
@@ -619,7 +625,7 @@
 
             // ================= 預約上課 Flow =================
 
-            // 步驟 1: 選擇日期 (點擊後自動跳頁)
+            // 步驟 1: 僅選擇日期 (點擊後自動跳頁)
             const renderBookStep1 = () => {
                 const year = viewDate.getFullYear();
                 const month = viewDate.getMonth();
@@ -633,7 +639,7 @@
                 const todayMidnight = new Date();
                 todayMidnight.setHours(0, 0, 0, 0);
                 const maxDate = new Date(todayMidnight);
-                maxDate.setMonth(maxDate.getMonth() + 3); // 擴展為 3 個月
+                maxDate.setMonth(maxDate.getMonth() + 2);
 
                 const calendarDays = [];
                 const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
@@ -652,7 +658,6 @@
                     const isTooFar = currentDate > maxDate;
                     
                     const dayOfWeek = currentDate.getDay();
-                    // 設定日, 一, 二 不可預約
                     const isAvailableDay = dayOfWeek !== 0 && dayOfWeek !== 1 && dayOfWeek !== 2; 
                     const dateStr = formatDate(currentDate);
                     const isDayClosed = closedDays.includes(dateStr); 
@@ -724,7 +729,7 @@
                 );
             };
 
-            // 步驟 2: 選擇時段 + 填寫代碼
+            // 步驟 2: 選擇時段與填寫代碼
             const renderBookStep2 = () => {
                 const isCurrentDayClosed = selectedDate ? closedDays.includes(formatDate(selectedDate)) : false;
 
@@ -745,6 +750,7 @@
                             {isAdmin && (
                                 <button
                                     onClick={async () => {
+                                        lastLocalUpdate.current = Date.now();
                                         const dateStr = formatDate(selectedDate);
                                         const isClosing = !isCurrentDayClosed; 
                                         
@@ -787,6 +793,7 @@
                                                 disabled={!isAdmin && isBooked}
                                                 onClick={async () => {
                                                     if (isAdmin) {
+                                                        lastLocalUpdate.current = Date.now();
                                                         const isClosingSlot = !isBooked;
                                                         const newBooked = isClosingSlot ? [...bookedSlots, slotKey] : bookedSlots.filter(k => k !== slotKey);
                                                         setBookedSlots(newBooked);
@@ -820,9 +827,8 @@
                             </div>
                         </div>
 
-                        {/* 在選擇時段下方直接合併輸入代碼，節省一頁 */}
                         {!isAdmin && (
-                            <div className="p-6 sm:p-8 line-border flex flex-col relative bg-white shadow-sm mt-6 fade-in">
+                            <div className="p-6 sm:p-8 line-border flex flex-col relative bg-white shadow-sm">
                                 <label className="block text-sm tracking-widest text-ink mb-4 font-bold text-center">填寫課程包專屬代碼 <span className="text-accent">*</span></label>
                                 <input 
                                     type="text" 
@@ -967,7 +973,11 @@
                             onClick={() => {
                                 if (isAdmin) {
                                     setIsAdmin(false);
-                                    resetAppToHome();
+                                    // 登出後停留在預約模式第一步 (日曆頁面)，不跳回首頁
+                                    setMode('book');
+                                    setStep(1);
+                                    setSelectedDate(null);
+                                    setSelectedTime(null);
                                 } else {
                                     setShowLogin(true);
                                 }
