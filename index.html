@@ -283,6 +283,7 @@
                     if (step === 1 && formData.name && formData.email) setStep(2);
                     else if (step === 2 && formData.plan) setStep(3);
                 } else if (mode === 'book') {
+                    // 預約流程：步驟二不再檢查代碼，只需選擇時間
                     if (step === 1 && selectedDate) setStep(2);
                     else if (step === 2 && (isAdmin || selectedTime)) setStep(3);
                 }
@@ -379,72 +380,23 @@
             };
 
             const renderHome = () => (
-                <div className="fade-in max-w-4xl mx-auto space-y-6 pt-4">
+                <div className="fade-in max-w-3xl mx-auto space-y-6 pt-4">
                     <h2 className="text-2xl font-serif mb-8 text-center text-ink tracking-wider font-bold">請選擇服務項目</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
-                        <button onClick={() => { setMode('purchase'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
-                            {/* 裝飾小圓點 */}
-                            <div className="absolute top-16 left-12 w-2 h-2 rounded-full bg-[#F3EDE7] opacity-60"></div>
-                            <div className="absolute top-12 right-14 w-3 h-3 rounded-full bg-[#FAF7F2] opacity-80"></div>
-                            
-                            <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
-                                <span className="absolute">🛍️</span>
-                                <span className="absolute bottom-2 right-2 text-2xl drop-shadow-md">✨</span>
-                            </div>
-                            
-                            <h3 className="text-[26px] font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">報名課程</h3>
-                            
-                            {/* 標題下方的點狀裝飾 */}
-                            <div className="flex gap-1.5 mb-5 justify-center">
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#D4C4B7] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                            </div>
-                            
-                            <p className="text-[13px] text-[#8C7E71] tracking-[0.1em] leading-relaxed mb-8 px-2 min-h-[40px] font-bold">
-                                適合首次報名上課，或原有<br className="hidden sm:block"/>課程堂數用盡需補購的同學。
-                            </p>
-                            
-                            <div className="mt-auto px-8 py-2.5 bg-[#FAF7F2] border border-[#E6DED5] text-[#4A3F35] rounded-full text-sm font-bold tracking-widest flex items-center justify-center group-hover:bg-[#F3EDE7] group-hover:border-[#C19A6B] transition-all w-4/5 max-w-[200px]">
-                                前往報名 <span className="ml-2 text-[#C19A6B] group-hover:translate-x-1 transition-transform">❯</span>
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <button onClick={() => { setMode('purchase'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 line-border bg-white hover:border-[#C19A6B] hover:shadow-md transition-all duration-300 text-left flex flex-col group items-start outline-none">
+                            <div className="w-16 h-16 bg-[#FAF7F2] rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:bg-[#F3EDE7] transition-all border border-[#E6DED5] group-hover:border-[#C19A6B]">🛍️</div>
+                            <h3 className="text-2xl font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">購買課程</h3>
+                            <p className="text-sm text-[#8C7E71] tracking-widest leading-relaxed">適合首次購買體驗，或是原有課程包堂數用盡需要補購的同學。</p>
                         </button>
-
-                        <button onClick={() => { setMode('book'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
-                            {/* 裝飾小圓點 */}
-                            <div className="absolute top-16 left-12 w-2 h-2 rounded-full bg-[#F3EDE7] opacity-60"></div>
-                            <div className="absolute top-12 right-14 w-3 h-3 rounded-full bg-[#FAF7F2] opacity-80"></div>
-                            
-                            <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
-                                <span className="absolute">📅</span>
-                                <span className="absolute bottom-2 right-2 text-2xl drop-shadow-md">📌</span>
-                            </div>
-                            
-                            <h3 className="text-[26px] font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">預約上課</h3>
-                            
-                            {/* 標題下方的點狀裝飾 */}
-                            <div className="flex gap-1.5 mb-5 justify-center">
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#D4C4B7] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                            </div>
-                            
-                            <p className="text-[13px] text-[#8C7E71] tracking-[0.1em] leading-relaxed mb-8 px-2 min-h-[40px] font-bold">
-                                已經持有課程包專屬代碼，<br className="hidden sm:block"/>需彈性安排上課時間的同學。
-                            </p>
-                            
-                            <div className="mt-auto px-8 py-2.5 bg-[#FAF7F2] border border-[#E6DED5] text-[#4A3F35] rounded-full text-sm font-bold tracking-widest flex items-center justify-center group-hover:bg-[#F3EDE7] group-hover:border-[#C19A6B] transition-all w-4/5 max-w-[200px]">
-                                前往預約 <span className="ml-2 text-[#C19A6B] group-hover:translate-x-1 transition-transform">❯</span>
-                            </div>
+                        <button onClick={() => { setMode('book'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 line-border bg-white hover:border-[#C19A6B] hover:shadow-md transition-all duration-300 text-left flex flex-col group items-start outline-none">
+                            <div className="w-16 h-16 bg-[#FAF7F2] rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 group-hover:bg-[#F3EDE7] transition-all border border-[#E6DED5] group-hover:border-[#C19A6B]">📅</div>
+                            <h3 className="text-2xl font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">預約上課</h3>
+                            <p className="text-sm text-[#8C7E71] tracking-widest leading-relaxed">適合已經持有課程包專屬代碼，準備預約時段排課的同學。</p>
                         </button>
                     </div>
                     <div className="flex justify-center mt-10 pb-4">
                         <a href="https://lin.ee/OYIH1YB" target="_blank" rel="noopener noreferrer" className="hover:scale-105 active:scale-95 transition-transform drop-shadow-sm inline-block" title="加入 LINE 好友">
-                            <img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" alt="加入好友" style={{ height: '34px' }} border="0" />
+                            <img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" alt="加入好友" style={{ height: '30px' }} border="0" />
                         </a>
                     </div>
                 </div>
@@ -489,21 +441,19 @@
                             {PURCHASE_PLANS.map(plan => {
                                 const isSelected = formData.plan === plan.id;
                                 return (
-                                    <button key={plan.id} onClick={() => setFormData({...formData, plan: plan.id})} className={`w-full text-left cursor-pointer border-2 p-4 sm:p-5 transition-all duration-300 relative flex flex-col sm:flex-row sm:justify-between sm:items-center rounded-xl select-none outline-none ${isSelected ? 'border-[#C19A6B] bg-[#F3EDE7] shadow-md' : 'border-[#E6DED5] bg-white hover:border-[#C19A6B] hover:bg-[#FAF7F2]'}`}>
-                                        <div className="flex flex-col pl-1 sm:pl-2 w-full sm:w-auto">
+                                    <button key={plan.id} onClick={() => setFormData({...formData, plan: plan.id})} className={`w-full text-left cursor-pointer border-2 p-4 sm:p-5 transition-all duration-300 relative flex flex-col sm:flex-row sm:justify-between items-start sm:items-center rounded-xl select-none outline-none gap-2 sm:gap-0 ${isSelected ? 'border-[#C19A6B] bg-[#F3EDE7] shadow-md' : 'border-[#E6DED5] bg-white hover:border-[#C19A6B] hover:bg-[#FAF7F2]'}`}>
+                                        <div className="flex flex-col pl-1 sm:pl-2 w-full">
                                             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
                                                 <span className={`font-serif tracking-widest text-[17px] sm:text-xl font-bold text-[#4A3F35] flex items-center whitespace-nowrap`}>
                                                     {plan.name.split(/(\d+)/).map((part, i) => /\d+/.test(part) ? <span key={i} className={`font-sans font-black italic text-[#C19A6B] mr-0.5 tracking-normal leading-none drop-shadow-sm ${part === '20' ? 'text-[22px] sm:text-[24px]' : 'text-[24px] sm:text-[26px]'}`}>{part}</span> : part)}
                                                 </span>
-                                                {plan.subtitle && (
-                                                    <span className={`text-[10.5px] sm:text-[12px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md font-bold transition-colors shadow-sm whitespace-nowrap mt-1 sm:mt-0 ${isSelected ? 'bg-[#C19A6B] text-white' : 'bg-[#FAF7F2] border border-[#E6DED5] text-red-500'}`}>
-                                                        {plan.subtitle}
-                                                    </span>
-                                                )}
+                                                <div className="flex gap-1.5 sm:gap-2 items-center flex-wrap mt-1 sm:mt-0">
+                                                    {plan.subtitle && <span className={`text-[10.5px] sm:text-[12px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md font-bold transition-colors shadow-sm whitespace-nowrap ${isSelected ? 'bg-[#C19A6B] text-white' : 'bg-[#FAF7F2] border border-[#E6DED5] text-red-500'}`}>{plan.subtitle}</span>}
+                                                </div>
                                             </div>
                                             {plan.originalPrice && <span className="text-[10px] sm:text-[11px] text-[#8C7E71] tracking-widest line-through mt-0.5 sm:mt-1 font-sans block">原價 NT$ {plan.originalPrice.toLocaleString()}</span>}
                                         </div>
-                                        <div className="text-right sm:ml-4 mt-3 sm:mt-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E6DED5]/50 sm:border-transparent flex-shrink-0 w-full sm:w-auto">
+                                        <div className="text-left sm:text-right flex-shrink-0 ml-1 sm:ml-4 w-full sm:w-auto border-t sm:border-t-0 border-mocha/30 sm:border-transparent pt-2 sm:pt-0 mt-1 sm:mt-0">
                                             <span className={`text-lg sm:text-xl font-sans tracking-wider font-bold whitespace-nowrap ${isSelected ? 'text-[#C19A6B]' : 'text-[#4A3F35]'}`}>NT${plan.price.toLocaleString()}</span>
                                         </div>
                                     </button>
@@ -540,25 +490,25 @@
                 return (
                     <div className="fade-in max-w-lg mx-auto space-y-6">
                         <div className="p-8 line-border bg-white relative">
-                            <h3 className="text-[22px] font-serif mb-8 text-center tracking-widest border-b-2 border-mocha pb-4 text-ink font-bold">確認訂單明細</h3>
-                            <div className="space-y-4 pb-6 mb-6 border-b-2 border-mocha">
+                            <h3 className="text-xl font-serif mb-8 text-center tracking-widest border-b-2 border-mocha pb-4 text-ink font-bold">確認訂單明細</h3>
+                            <div className="space-y-4 pb-6 mb-6 text-sm border-b-2 border-mocha">
                                 <div className="flex justify-between items-center pb-2 border-b border-mocha/40">
-                                    <span className="text-ink-light tracking-widest text-[14px] font-bold">姓名</span><span className="font-sans text-ink font-bold text-[15px]">{formData.name}</span>
+                                    <span className="text-ink-light tracking-widest text-xs font-bold">姓名</span><span className="font-sans text-ink font-bold">{formData.name}</span>
                                 </div>
                                 <div className="flex justify-between items-center pb-2 border-b border-mocha/40">
-                                    <span className="text-ink-light tracking-widest text-[14px] font-bold">信箱</span><span className="font-sans text-ink font-bold text-[15px]">{formData.email}</span>
+                                    <span className="text-ink-light tracking-widest text-xs font-bold">信箱</span><span className="font-sans text-ink font-bold">{formData.email}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-ink-light tracking-widest text-[14px] font-bold">購買方案</span><span className="font-sans text-ink font-bold text-[15px]">{selectedPlanData?.name}</span>
+                                    <span className="text-ink-light tracking-widest text-xs font-bold">購買方案</span><span className="font-sans text-ink font-bold">{selectedPlanData?.name}</span>
                                 </div>
                             </div>
                             <div className="flex justify-between items-end mb-6 bg-milk p-4 rounded-xl border border-mocha">
-                                <span className="font-sans text-[14px] tracking-widest text-ink-light font-bold">結帳總計</span><span className="text-3xl font-sans text-ink tracking-wider font-bold whitespace-nowrap">NT${selectedPlanData?.price.toLocaleString()}</span>
+                                <span className="font-sans text-sm tracking-widest text-ink-light font-bold">結帳總計</span><span className="text-3xl font-sans text-ink tracking-wider font-bold whitespace-nowrap">NT${selectedPlanData?.price.toLocaleString()}</span>
                             </div>
                             {isPaying ? (
                                 <div className="w-full py-4 border-2 border-[#4A3F35] bg-white flex items-center justify-center space-x-3 rounded-full"><div className="loader"></div><span className="text-sm tracking-widest text-[#4A3F35] font-bold">處理中...</span></div>
                             ) : (
-                                <button onClick={handlePayment} className="w-full py-4 transition-all duration-300 font-sans tracking-widest flex items-center justify-center text-[18px] rounded-full shadow-md font-bold select-none outline-none border-2 bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95">前往結帳</button>
+                                <button onClick={handlePayment} className="w-full py-4 transition-all duration-300 font-sans tracking-widest flex items-center justify-center text-base rounded-full shadow-md font-bold select-none outline-none border-2 bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95">前往結帳</button>
                             )}
                         </div>
                         {!isPaying && (
@@ -842,9 +792,9 @@
                     <div className="fade-in max-w-lg mx-auto space-y-6">
                         <div className="p-8 line-border bg-white relative">
                             <h3 className="text-[22px] font-serif mb-8 text-center tracking-widest border-b-2 border-mocha pb-4 text-ink font-bold">確認預約明細</h3>
-                            <div className="space-y-4 pb-6 mb-6 border-b-2 border-mocha">
+                            <div className="space-y-4 pb-6 mb-6 text-base border-b-2 border-mocha">
                                 <div className="flex justify-between items-center pb-2 border-b border-mocha/40">
-                                    <span className="text-ink-light tracking-widest text-[14px] font-bold">上課時間</span><span className="font-sans text-ink font-bold text-[15px]">{formatDisplayDate(selectedDate)} {selectedTime}</span>
+                                    <span className="text-ink-light tracking-widest text-[14px] font-bold">上課時間</span><span className="font-sans text-ink font-bold text-[17px]">{formatDisplayDate(selectedDate)} {selectedTime}</span>
                                 </div>
                                 <div className="flex flex-col pt-2">
                                     <label className="text-ink-light tracking-widest text-[14px] font-bold mb-2">課程代碼 <span className="text-accent">*</span></label>
@@ -859,11 +809,11 @@
                                 </div>
                             </div>
                             <div className="flex justify-between items-end mb-6 bg-milk p-4 rounded-xl border border-mocha">
-                                <span className="font-sans text-[14px] tracking-widest text-ink-light font-bold">扣除堂數</span><span className="text-[17px] font-sans text-ink tracking-wider font-bold whitespace-nowrap">1 堂</span>
+                                <span className="font-sans text-[15px] tracking-widest text-ink-light font-bold">扣除堂數</span><span className="text-[17px] font-sans text-ink font-bold whitespace-nowrap">1 堂</span>
                             </div>
                             {errorMsg && <div className="mb-6 text-center text-red-600 bg-red-50 py-3 rounded-lg border border-red-200 text-sm tracking-widest font-bold">{errorMsg}</div>}
                             {isPaying ? (
-                                <div className="w-full py-4 border-2 border-[#4A3F35] bg-white flex items-center justify-center space-x-3 rounded-full"><div className="loader"></div><span className="text-sm tracking-widest text-[#4A3F35] font-bold">處理中...</span></div>
+                                <div className="w-full py-4 border-2 border-[#4A3F35] bg-white flex items-center justify-center space-x-3 rounded-full"><div className="loader"></div><span className="text-base tracking-widest text-[#4A3F35] font-bold">處理中...</span></div>
                             ) : (
                                 <button 
                                     onClick={handlePayment} 
@@ -875,7 +825,7 @@
                             )}
                         </div>
                         {!isPaying && (
-                            <div className="flex justify-center"><button onClick={handleBack} className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors px-4 py-2 font-bold select-none outline-none">返回修改時段</button></div>
+                            <div className="flex justify-center"><button onClick={handleBack} className="text-base tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors px-4 py-2 font-bold select-none outline-none">返回修改時段</button></div>
                         )}
                     </div>
                 );
