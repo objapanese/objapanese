@@ -140,7 +140,7 @@
         };
 
         const StepIndicator = ({ currentStep, mode, isAdmin }) => {
-            if (!mode || isAdmin) return null; 
+            if (!mode || isAdmin || mode === 'query') return null; 
             
             const steps = mode === 'purchase'
                 ? [{ step: 1, label: '資料' }, { step: 2, label: '方案' }, { step: 3, label: '結帳' }]
@@ -193,6 +193,11 @@
             const [isToggling, setIsToggling] = useState(false); 
             const [togglingSlots, setTogglingSlots] = useState({});
 
+            // 查詢專用的 state
+            const [queryCode, setQueryCode] = useState('');
+            const [isQuerying, setIsQuerying] = useState(false);
+            const [queryResult, setQueryResult] = useState(null); // { remaining: 5, classes: [...] } 或 null
+
             const resetAppToHome = () => {
                 setMode(null);
                 setStep(1);
@@ -203,6 +208,8 @@
                 setPaymentSuccess(false);
                 setRemainingClasses(null);
                 setErrorMsg("");
+                setQueryCode('');
+                setQueryResult(null);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
 
@@ -290,8 +297,10 @@
             };
 
             const handleBack = () => {
-                if (step === 1) {
+                if (step === 1 || mode === 'query') {
                     setMode(null);
+                    setQueryResult(null);
+                    setErrorMsg("");
                 } else {
                     setStep(step - 1);
                 }
@@ -374,27 +383,65 @@
                 }
             };
 
+            const handleQuery = async () => {
+                if (!queryCode.trim()) return;
+                setIsQuerying(true);
+                setErrorMsg("");
+                setQueryResult(null);
+
+                if (!GOOGLE_WEBHOOK_URL) {
+                    setIsQuerying(false);
+                    setErrorMsg("系統錯誤：尚未設定後台網址");
+                    return;
+                }
+
+                try {
+                    const response = await fetch(GOOGLE_WEBHOOK_URL, {
+                        method: 'POST',
+                        redirect: 'follow',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({
+                            type: 'query_code',
+                            code: queryCode
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    setIsQuerying(false);
+
+                    if (result.status === 'success') {
+                        setQueryResult({
+                            remaining: result.remaining,
+                            classes: result.classes || []
+                        });
+                    } else {
+                        setErrorMsg(result.message || "查無此代碼，請確認是否輸入正確。");
+                    }
+                } catch (e) {
+                    setIsQuerying(false);
+                    setErrorMsg("連線發生錯誤，請稍後再試。");
+                }
+            };
+
             const handleInputChange = (e) => {
                 setFormData({ ...formData, [e.target.name]: e.target.value });
             };
 
             const renderHome = () => (
-                <div className="fade-in max-w-4xl mx-auto space-y-6 pt-4">
+                <div className="fade-in max-w-6xl mx-auto space-y-6 pt-4">
                     <h2 className="text-2xl font-serif mb-8 text-center text-ink tracking-wider font-bold">請選擇服務項目</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                        {/* 報名課程 */}
                         <button onClick={() => { setMode('purchase'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
-                            {/* 裝飾小圓點 */}
                             <div className="absolute top-16 left-12 w-2 h-2 rounded-full bg-[#F3EDE7] opacity-60"></div>
                             <div className="absolute top-12 right-14 w-3 h-3 rounded-full bg-[#FAF7F2] opacity-80"></div>
                             
                             <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
                                 <span className="absolute">🛍️</span>
-                                <span className="absolute bottom-2 right-2 text-2xl drop-shadow-md">✨</span>
                             </div>
                             
                             <h3 className="text-[26px] font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">報名課程</h3>
                             
-                            {/* 標題下方的點狀裝飾 */}
                             <div className="flex gap-1.5 mb-5 justify-center">
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
@@ -412,19 +459,17 @@
                             </div>
                         </button>
 
+                        {/* 預約上課 */}
                         <button onClick={() => { setMode('book'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
-                            {/* 裝飾小圓點 */}
                             <div className="absolute top-16 left-12 w-2 h-2 rounded-full bg-[#F3EDE7] opacity-60"></div>
                             <div className="absolute top-12 right-14 w-3 h-3 rounded-full bg-[#FAF7F2] opacity-80"></div>
                             
                             <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
                                 <span className="absolute">📅</span>
-                                <span className="absolute bottom-2 right-2 text-2xl drop-shadow-md">📌</span>
                             </div>
                             
                             <h3 className="text-[26px] font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">預約上課</h3>
                             
-                            {/* 標題下方的點狀裝飾 */}
                             <div className="flex gap-1.5 mb-5 justify-center">
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
@@ -441,11 +486,110 @@
                                 前往預約 <span className="ml-2 text-[#C19A6B] group-hover:translate-x-1 transition-transform">❯</span>
                             </div>
                         </button>
+                        
+                        {/* 查詢預約 */}
+                        <button onClick={() => { setMode('query'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
+                            <div className="absolute top-16 left-12 w-2 h-2 rounded-full bg-[#F3EDE7] opacity-60"></div>
+                            <div className="absolute top-12 right-14 w-3 h-3 rounded-full bg-[#FAF7F2] opacity-80"></div>
+                            
+                            <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
+                                <span className="absolute drop-shadow-md">🔍</span>
+                            </div>
+                            
+                            <h3 className="text-[26px] font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">查詢預約</h3>
+                            
+                            <div className="flex gap-1.5 mb-5 justify-center">
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#D4C4B7] group-hover:bg-[#C19A6B] transition-colors"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
+                            </div>
+                            
+                            <p className="text-[13px] text-[#8C7E71] tracking-[0.1em] leading-relaxed mb-8 px-2 min-h-[40px] font-bold">
+                                查詢已預約的課程時間與上課資訊，<br className="hidden sm:block"/>方便隨時掌握學習進度。
+                            </p>
+                            
+                            <div className="mt-auto px-8 py-2.5 bg-[#FAF7F2] border border-[#E6DED5] text-[#4A3F35] rounded-full text-sm font-bold tracking-widest flex items-center justify-center group-hover:bg-[#F3EDE7] group-hover:border-[#C19A6B] transition-all w-4/5 max-w-[200px]">
+                                前往查詢 <span className="ml-2 text-[#C19A6B] group-hover:translate-x-1 transition-transform">❯</span>
+                            </div>
+                        </button>
                     </div>
                     <div className="flex justify-center mt-10 pb-4">
                         <a href="https://lin.ee/OYIH1YB" target="_blank" rel="noopener noreferrer" className="hover:scale-105 active:scale-95 transition-transform drop-shadow-sm inline-block" title="加入 LINE 好友">
                             <img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" alt="加入好友" style={{ height: '34px' }} border="0" />
                         </a>
+                    </div>
+                </div>
+            );
+
+            const renderQueryMode = () => (
+                <div className="fade-in max-w-lg mx-auto space-y-6 pt-4">
+                    <div className="text-center mb-6">
+                        <h2 className="text-2xl font-serif mb-2 text-ink tracking-wider font-bold">查詢課程紀錄</h2>
+                        <p className="text-sm text-ink-light tracking-widest font-bold">請輸入您的專屬課程代碼（測試請輸入 demo）</p>
+                    </div>
+                    <div className="p-8 line-border bg-white">
+                        <div className="space-y-6">
+                            <div>
+                                <input 
+                                    type="text" 
+                                    value={queryCode}
+                                    onChange={(e) => setQueryCode(e.target.value)}
+                                    className="w-full bg-milk border-2 border-mocha px-4 py-4 focus:outline-none focus:border-ink focus:bg-white transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl text-center tracking-[0.2em] text-lg" 
+                                    placeholder="輸入課程代碼"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleQuery()}
+                                />
+                            </div>
+                            
+                            {errorMsg && <div className="text-center text-red-600 bg-red-50 py-3 rounded-lg border border-red-200 text-sm tracking-widest font-bold">{errorMsg}</div>}
+                            
+                            {isQuerying ? (
+                                <div className="w-full py-4 border-2 border-[#4A3F35] bg-white flex items-center justify-center space-x-3 rounded-xl"><div className="loader"></div><span className="text-sm tracking-widest text-[#4A3F35] font-bold">查詢中...</span></div>
+                            ) : (
+                                <button 
+                                    onClick={handleQuery} 
+                                    disabled={!queryCode.trim()}
+                                    className={`w-full py-4 transition-all duration-300 font-sans tracking-widest flex items-center justify-center text-[18px] rounded-xl shadow-md font-bold select-none outline-none border-2 ${!queryCode.trim() ? 'bg-[#E6DED5] text-[#8C7E71] border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95'}`}
+                                >
+                                    開始查詢
+                                </button>
+                            )}
+                        </div>
+
+                        {queryResult && (
+                            <div className="mt-8 pt-8 border-t-2 border-mocha fade-in">
+                                <h3 className="font-serif tracking-widest text-ink font-bold text-lg mb-4 text-center">查詢結果</h3>
+                                <div className="bg-accent-light border border-accent rounded-xl p-4 text-center mb-6">
+                                    <p className="text-ink text-sm tracking-widest font-bold">您的課程包剩餘：<span className="text-2xl ml-2 text-ink">{queryResult.remaining} 堂</span></p>
+                                </div>
+                                
+                                <div className="space-y-3">
+                                    <p className="text-ink-light text-xs tracking-widest font-bold mb-2">已預約的課程：</p>
+                                    {queryResult.classes.length > 0 ? (
+                                        queryResult.classes.map((cls, idx) => (
+                                            <div key={idx} className={`p-4 rounded-xl border flex justify-between items-center ${cls.status === 'upcoming' ? 'bg-white border-mocha shadow-sm' : 'bg-gray-50 border-gray-200 opacity-60'}`}>
+                                                <div className="flex flex-col">
+                                                    <span className={`font-sans font-bold tracking-wider ${cls.status === 'upcoming' ? 'text-ink' : 'text-gray-500 line-through'}`}>{cls.date}</span>
+                                                    <span className={`text-sm mt-1 font-bold ${cls.status === 'upcoming' ? 'text-accent' : 'text-gray-400'}`}>{cls.time}</span>
+                                                </div>
+                                                <div>
+                                                    <span className={`text-xs px-3 py-1 rounded-md font-bold tracking-widest ${cls.status === 'upcoming' ? 'bg-[#C19A6B] text-white' : 'bg-gray-200 text-gray-500'}`}>
+                                                        {cls.status === 'upcoming' ? '即將到來' : '已完成'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-center text-ink-light text-sm tracking-widest py-4">目前沒有任何預約紀錄喔！</p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    
+                    <div className="flex justify-center pt-2">
+                        <button onClick={handleBack} className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors flex items-center font-bold px-4 py-2 select-none outline-none">返回首頁</button>
                     </div>
                 </div>
             );
@@ -495,15 +639,12 @@
                                                 <span className={`font-serif tracking-widest text-[17px] sm:text-xl font-bold text-[#4A3F35] flex items-center whitespace-nowrap`}>
                                                     {plan.name.split(/(\d+)/).map((part, i) => /\d+/.test(part) ? <span key={i} className={`font-sans font-black italic text-[#C19A6B] mr-0.5 tracking-normal leading-none drop-shadow-sm ${part === '20' ? 'text-[22px] sm:text-[24px]' : 'text-[24px] sm:text-[26px]'}`}>{part}</span> : part)}
                                                 </span>
-                                                {plan.subtitle && (
-                                                    <span className={`text-[10.5px] sm:text-[12px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md font-bold transition-colors shadow-sm whitespace-nowrap mt-1 sm:mt-0 ${isSelected ? 'bg-[#C19A6B] text-white' : 'bg-[#FAF7F2] border border-[#E6DED5] text-red-500'}`}>
-                                                        {plan.subtitle}
-                                                    </span>
-                                                )}
+                                                <div className="flex gap-1.5 sm:gap-2 items-center flex-wrap mt-1 sm:mt-0">
+                                                    {plan.subtitle && <span className={`text-[10.5px] sm:text-[12px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md font-bold transition-colors shadow-sm whitespace-nowrap ${isSelected ? 'bg-[#C19A6B] text-white' : 'bg-[#FAF7F2] border border-[#E6DED5] text-red-500'}`}>{plan.subtitle}</span>}
+                                                </div>
                                             </div>
                                             {plan.originalPrice && <span className="text-[10px] sm:text-[11px] text-[#8C7E71] tracking-widest line-through mt-0.5 sm:mt-1 font-sans block">原價 NT$ {plan.originalPrice.toLocaleString()}</span>}
                                         </div>
-                                        {/* 修改：手機版靠左對齊，加上頂部邊框作為分隔線；電腦版靠右對齊，移除邊框 */}
                                         <div className="text-left sm:text-right mt-3 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-[#E6DED5]/80 sm:border-transparent flex-shrink-0 w-full sm:w-auto">
                                             <span className={`text-lg sm:text-xl font-sans tracking-wider font-bold whitespace-nowrap ${isSelected ? 'text-[#C19A6B]' : 'text-[#4A3F35]'}`}>NT${plan.price.toLocaleString()}</span>
                                         </div>
@@ -921,7 +1062,7 @@
                         </p>
                     </header>
 
-                    <main className="flex-1 container mx-auto px-4 max-w-5xl pb-10 flex flex-col">
+                    <main className="flex-1 container mx-auto px-4 max-w-6xl pb-10 flex flex-col">
                         {!paymentSuccess && <StepIndicator currentStep={step} mode={mode} isAdmin={isAdmin} />}
                         <div className="transition-all duration-500 w-full flex-1">
                             {!mode && renderHome()}
@@ -931,6 +1072,7 @@
                             {mode === 'book' && step === 1 && renderBookStep1()}
                             {mode === 'book' && step === 2 && renderBookStep2()}
                             {mode === 'book' && step === 3 && renderBookStep3()}
+                            {mode === 'query' && renderQueryMode()}
                         </div>
                     </main>
 
