@@ -200,7 +200,7 @@
             const [queryResult, setQueryResult] = useState(null);
             const [selectedFilterMonth, setSelectedFilterMonth] = useState('all');
 
-            // --- 提取至最上層的 Hooks ---
+            // --- 提取至元件最上層的 Hooks ---
             const availableMonths = useMemo(() => {
                 if (!queryResult || !queryResult.classes) return [];
                 const months = new Set();
@@ -224,7 +224,7 @@
                     return false;
                 });
             }, [queryResult, selectedFilterMonth]);
-            // -----------------------------
+            // ---------------------------------
 
             const resetAppToHome = () => {
                 setMode(null);
@@ -464,13 +464,10 @@
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                         {/* 報名課程 */}
                         <button onClick={() => { setMode('purchase'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
-                            
                             <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
                                 <span className="absolute">📚</span>
                             </div>
-                            
                             <h3 className="text-[26px] font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">報名課程</h3>
-                            
                             <div className="flex gap-1.5 mb-5 justify-center">
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
@@ -478,11 +475,9 @@
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
                             </div>
-                            
                             <p className="text-[13px] text-[#8C7E71] tracking-[0.1em] leading-relaxed mb-8 px-2 min-h-[40px] font-bold">
                                 首次報名上課，<br/>或堂數用盡需補購的同學。
                             </p>
-                            
                             <div className="mt-auto px-8 py-2.5 bg-[#FAF7F2] border border-[#E6DED5] text-[#4A3F35] rounded-full text-sm font-bold tracking-widest flex items-center justify-center group-hover:bg-[#F3EDE7] group-hover:border-[#C19A6B] transition-all w-4/5 max-w-[200px]">
                                 前往報名 <span className="ml-2 text-[#C19A6B] group-hover:translate-x-1 transition-transform">❯</span>
                             </div>
@@ -490,13 +485,10 @@
 
                         {/* 預約上課 */}
                         <button onClick={() => { setMode('book'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
-                            
                             <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
                                 <span className="absolute">🗓️</span>
                             </div>
-                            
                             <h3 className="text-[26px] font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">預約上課</h3>
-                            
                             <div className="flex gap-1.5 mb-5 justify-center">
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
@@ -504,11 +496,9 @@
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
                             </div>
-                            
                             <p className="text-[13px] text-[#8C7E71] tracking-[0.1em] leading-relaxed mb-8 px-2 min-h-[40px] font-bold">
                                 已經持有課程包代碼，<br/>需彈性安排上課時間的同學。
                             </p>
-                            
                             <div className="mt-auto px-8 py-2.5 bg-[#FAF7F2] border border-[#E6DED5] text-[#4A3F35] rounded-full text-sm font-bold tracking-widest flex items-center justify-center group-hover:bg-[#F3EDE7] group-hover:border-[#C19A6B] transition-all w-4/5 max-w-[200px]">
                                 前往預約 <span className="ml-2 text-[#C19A6B] group-hover:translate-x-1 transition-transform">❯</span>
                             </div>
@@ -516,13 +506,10 @@
                         
                         {/* 查詢預約 */}
                         <button onClick={() => { setMode('query'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
-                            
                             <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
                                 <span className="absolute drop-shadow-md">🔍</span>
                             </div>
-                            
                             <h3 className="text-[26px] font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">查詢預約</h3>
-                            
                             <div className="flex gap-1.5 mb-5 justify-center">
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
@@ -530,11 +517,9 @@
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
                             </div>
-                            
                             <p className="text-[13px] text-[#8C7E71] tracking-[0.1em] leading-relaxed mb-8 px-2 min-h-[40px] font-bold">
                                 查詢已預約的課程，<br/>方便隨時掌握上課資訊。
                             </p>
-                            
                             <div className="mt-auto px-8 py-2.5 bg-[#FAF7F2] border border-[#E6DED5] text-[#4A3F35] rounded-full text-sm font-bold tracking-widest flex items-center justify-center group-hover:bg-[#F3EDE7] group-hover:border-[#C19A6B] transition-all w-4/5 max-w-[200px]">
                                 前往查詢 <span className="ml-2 text-[#C19A6B] group-hover:translate-x-1 transition-transform">❯</span>
                             </div>
@@ -548,31 +533,46 @@
                 </div>
             );
 
+            const renderQueryStep1 = () => (
+                <div className="fade-in max-w-lg mx-auto space-y-6 pt-4">
+                    <div className="text-center mb-6">
+                        <h2 className="text-2xl font-serif mb-2 text-ink tracking-wider font-bold">查詢課程紀錄</h2>
+                    </div>
+                    <div className="p-8 line-border bg-white">
+                        <div className="space-y-6">
+                            <div>
+                                <input 
+                                    type="text" 
+                                    value={queryCode}
+                                    onChange={(e) => setQueryCode(e.target.value)}
+                                    className="w-full bg-milk border-2 border-mocha px-4 py-4 focus:outline-none focus:border-ink focus:bg-white transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl text-center tracking-[0.2em] text-lg" 
+                                    placeholder="請輸入課程包代碼"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleQuery()}
+                                />
+                            </div>
+                            
+                            {errorMsg && <div className="text-center text-red-600 bg-red-50 py-3 rounded-lg border border-red-200 text-sm tracking-widest font-bold">{errorMsg}</div>}
+                            
+                            {isQuerying ? (
+                                <div className="w-full py-4 border-2 border-[#4A3F35] bg-white flex items-center justify-center space-x-3 rounded-xl"><div className="loader"></div><span className="text-sm tracking-widest text-[#4A3F35] font-bold">查詢中...</span></div>
+                            ) : (
+                                <button 
+                                    onClick={handleQuery} 
+                                    disabled={!queryCode.trim()}
+                                    className={`w-full py-4 transition-all duration-300 font-sans tracking-widest flex items-center justify-center text-[18px] rounded-xl shadow-md font-bold select-none outline-none border-2 ${!queryCode.trim() ? 'bg-[#E6DED5] text-[#8C7E71] border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95'}`}
+                                >
+                                    開始查詢
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex justify-center pt-2">
+                        <button onClick={handleBack} className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors flex items-center font-bold px-4 py-2 select-none outline-none">返回首頁</button>
+                    </div>
+                </div>
+            );
+
             const renderQueryStep2 = () => {
-                const availableMonths = useMemo(() => {
-                    if (!queryResult || !queryResult.classes) return [];
-                    const months = new Set();
-                    queryResult.classes.forEach(cls => {
-                        const match = cls.date.match(/(\d{4})[/-](\d{1,2})/);
-                        if (match) {
-                            months.add(`${match[1]}-${match[2].padStart(2, '0')}`);
-                        }
-                    });
-                    return Array.from(months).sort().reverse();
-                }, [queryResult]);
-
-                const filteredClasses = useMemo(() => {
-                    if (!queryResult || !queryResult.classes) return [];
-                    if (selectedFilterMonth === 'all') return queryResult.classes;
-                    return queryResult.classes.filter(cls => {
-                        const match = cls.date.match(/(\d{4})[/-](\d{1,2})/);
-                        if (match) {
-                            return `${match[1]}-${match[2].padStart(2, '0')}` === selectedFilterMonth;
-                        }
-                        return false;
-                    });
-                }, [queryResult, selectedFilterMonth]);
-
                 return (
                     <div className="fade-in max-w-lg mx-auto space-y-6 pt-4">
                         <div className="text-center mb-6">
@@ -586,12 +586,12 @@
                             
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center mb-2 pb-3 border-b-2 border-mocha min-h-[44px]">
-                                    <p className="text-ink-light text-[15px] tracking-widest font-bold">已預約的課程：</p>
+                                    <p className="text-ink-light text-base tracking-widest font-bold">已預約的課程：</p>
                                     {availableMonths.length > 0 && (
                                         <select 
                                             value={selectedFilterMonth} 
                                             onChange={(e) => setSelectedFilterMonth(e.target.value)}
-                                            className="bg-milk border border-mocha text-ink px-3.5 py-2 rounded-lg focus:outline-none focus:border-ink font-bold text-[13px] tracking-widest cursor-pointer appearance-none shadow-sm"
+                                            className="bg-milk border border-mocha text-ink px-4 py-2 rounded-lg focus:outline-none focus:border-ink font-bold text-sm tracking-widest cursor-pointer appearance-none shadow-sm"
                                             style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234A3F35%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right .6rem top 50%', backgroundSize: '.55rem auto', paddingRight: '2rem' }}
                                         >
                                             <option value="all">全部月份</option>
@@ -628,46 +628,6 @@
                     </div>
                 );
             };
-
-            const renderQueryStep1 = () => (
-                <div className="fade-in max-w-lg mx-auto space-y-6 pt-4">
-                    <div className="text-center mb-6">
-                        <h2 className="text-2xl font-serif mb-2 text-ink tracking-wider font-bold">查詢課程紀錄</h2>
-                    </div>
-                    <div className="p-8 line-border bg-white">
-                        <div className="space-y-6">
-                            <div>
-                                <input 
-                                    type="text" 
-                                    value={queryCode}
-                                    onChange={(e) => setQueryCode(e.target.value)}
-                                    className="w-full bg-milk border-2 border-mocha px-4 py-4 focus:outline-none focus:border-ink focus:bg-white transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl text-center tracking-[0.2em] text-lg" 
-                                    placeholder="請輸入課程包代碼"
-                                    onKeyDown={(e) => e.key === 'Enter' && handleQuery()}
-                                />
-                            </div>
-                            
-                            {errorMsg && <div className="text-center text-red-600 bg-red-50 py-3 rounded-lg border border-red-200 text-sm tracking-widest font-bold">{errorMsg}</div>}
-                            
-                            {isQuerying ? (
-                                <div className="w-full py-4 border-2 border-[#4A3F35] bg-white flex items-center justify-center space-x-3 rounded-xl"><div className="loader"></div><span className="text-sm tracking-widest text-[#4A3F35] font-bold">查詢中...</span></div>
-                            ) : (
-                                <button 
-                                    onClick={handleQuery} 
-                                    disabled={!queryCode.trim()}
-                                    className={`w-full py-4 transition-all duration-300 font-sans tracking-widest flex items-center justify-center text-[18px] rounded-xl shadow-md font-bold select-none outline-none border-2 ${!queryCode.trim() ? 'bg-[#E6DED5] text-[#8C7E71] border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95'}`}
-                                >
-                                    開始查詢
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                    
-                    <div className="flex justify-center pt-2">
-                        <button onClick={handleBack} className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors flex items-center font-bold px-4 py-2 select-none outline-none">返回首頁</button>
-                    </div>
-                </div>
-            );
 
             const renderPurchaseStep1 = () => (
                 <div className="fade-in max-w-lg mx-auto space-y-6">
