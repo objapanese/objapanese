@@ -448,7 +448,7 @@
                                                     {plan.name.split(/(\d+)/).map((part, i) => /\d+/.test(part) ? <span key={i} className={`font-sans font-black italic text-[#C19A6B] mr-0.5 tracking-normal leading-none drop-shadow-sm ${part === '20' ? 'text-[22px] sm:text-[24px]' : 'text-[24px] sm:text-[26px]'}`}>{part}</span> : part)}
                                                 </span>
                                                 <div className="flex gap-1.5 sm:gap-2 items-center flex-wrap mt-1 sm:mt-0">
-                                                    {plan.subtitle && <span className={`text-[10px] sm:text-[11.5px] px-2 sm:px-3 py-1 sm:py-1.5 rounded-md font-bold transition-colors shadow-sm whitespace-nowrap ${isSelected ? 'bg-[#C19A6B] text-white' : 'bg-[#FAF7F2] border border-[#E6DED5] text-red-500'}`}>{plan.subtitle}</span>}
+                                                    {plan.subtitle && <span className={`text-[11px] sm:text-[13px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-md font-bold transition-colors shadow-sm whitespace-nowrap ${isSelected ? 'bg-[#C19A6B] text-white' : 'bg-[#FAF7F2] border border-[#E6DED5] text-red-500'}`}>{plan.subtitle}</span>}
                                                 </div>
                                             </div>
                                             {plan.originalPrice && <span className="text-[10px] sm:text-[11px] text-[#8C7E71] tracking-widest line-through mt-0.5 sm:mt-1 font-sans block">原價 NT$ {plan.originalPrice.toLocaleString()}</span>}
