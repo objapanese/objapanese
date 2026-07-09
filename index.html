@@ -489,19 +489,21 @@
                             {PURCHASE_PLANS.map(plan => {
                                 const isSelected = formData.plan === plan.id;
                                 return (
-                                    <button key={plan.id} onClick={() => setFormData({...formData, plan: plan.id})} className={`w-full text-left cursor-pointer border-2 p-4 sm:p-5 transition-all duration-300 relative flex justify-between items-center rounded-xl select-none outline-none ${isSelected ? 'border-[#C19A6B] bg-[#F3EDE7] shadow-md' : 'border-[#E6DED5] bg-white hover:border-[#C19A6B] hover:bg-[#FAF7F2]'}`}>
-                                        <div className="flex flex-col pl-1 sm:pl-2 overflow-hidden">
-                                            <div className="flex items-center gap-1.5 sm:gap-2 mb-1 whitespace-nowrap">
+                                    <button key={plan.id} onClick={() => setFormData({...formData, plan: plan.id})} className={`w-full text-left cursor-pointer border-2 p-4 sm:p-5 transition-all duration-300 relative flex flex-col sm:flex-row sm:justify-between sm:items-center rounded-xl select-none outline-none ${isSelected ? 'border-[#C19A6B] bg-[#F3EDE7] shadow-md' : 'border-[#E6DED5] bg-white hover:border-[#C19A6B] hover:bg-[#FAF7F2]'}`}>
+                                        <div className="flex flex-col pl-1 sm:pl-2 w-full sm:w-auto">
+                                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
                                                 <span className={`font-serif tracking-widest text-[17px] sm:text-xl font-bold text-[#4A3F35] flex items-center whitespace-nowrap`}>
                                                     {plan.name.split(/(\d+)/).map((part, i) => /\d+/.test(part) ? <span key={i} className={`font-sans font-black italic text-[#C19A6B] mr-0.5 tracking-normal leading-none drop-shadow-sm ${part === '20' ? 'text-[22px] sm:text-[24px]' : 'text-[24px] sm:text-[26px]'}`}>{part}</span> : part)}
                                                 </span>
-                                                <div className="flex gap-1.5 sm:gap-2 items-center flex-wrap mt-1 sm:mt-0">
-                                                    {plan.subtitle && <span className={`text-[10.5px] sm:text-[12px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md font-bold transition-colors shadow-sm whitespace-nowrap ${isSelected ? 'bg-[#C19A6B] text-white' : 'bg-[#FAF7F2] border border-[#E6DED5] text-red-500'}`}>{plan.subtitle}</span>}
-                                                </div>
+                                                {plan.subtitle && (
+                                                    <span className={`text-[10.5px] sm:text-[12px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md font-bold transition-colors shadow-sm whitespace-nowrap mt-1 sm:mt-0 ${isSelected ? 'bg-[#C19A6B] text-white' : 'bg-[#FAF7F2] border border-[#E6DED5] text-red-500'}`}>
+                                                        {plan.subtitle}
+                                                    </span>
+                                                )}
                                             </div>
                                             {plan.originalPrice && <span className="text-[10px] sm:text-[11px] text-[#8C7E71] tracking-widest line-through mt-0.5 sm:mt-1 font-sans block">原價 NT$ {plan.originalPrice.toLocaleString()}</span>}
                                         </div>
-                                        <div className="text-right flex-shrink-0 ml-2 sm:ml-4">
+                                        <div className="text-right sm:ml-4 mt-3 sm:mt-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E6DED5]/50 sm:border-transparent flex-shrink-0 w-full sm:w-auto">
                                             <span className={`text-lg sm:text-xl font-sans tracking-wider font-bold whitespace-nowrap ${isSelected ? 'text-[#C19A6B]' : 'text-[#4A3F35]'}`}>NT${plan.price.toLocaleString()}</span>
                                         </div>
                                     </button>
