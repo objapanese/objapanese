@@ -83,6 +83,12 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .btn-processing {
+            opacity: 0.6;
+            cursor: not-allowed !important;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -187,6 +193,11 @@
             const [remainingClasses, setRemainingClasses] = useState(null);
             const [errorMsg, setErrorMsg] = useState("");
             const [viewDate, setViewDate] = useState(new Date());
+
+            // 防止連點的狀態
+            const [isToggling, setIsToggling] = useState(false); 
+            // 針對單一時段防連點
+            const [togglingSlots, setTogglingSlots] = useState({});
 
             const resetAppToHome = () => {
                 setMode(null);
@@ -753,35 +764,48 @@
 
                             {isAdmin && (
                                 <button
+                                    disabled={isToggling}
                                     onClick={async () => {
+                                        setIsToggling(true);
                                         lastLocalUpdate.current = Date.now();
                                         const dateStr = formatDate(selectedDate);
                                         const isClosing = !isCurrentDayClosed; 
                                         
-                                        if (isClosing) setClosedDays([...closedDays, dateStr]);
-                                        else setClosedDays(closedDays.filter(d => d !== dateStr));
+                                        // 樂觀更新 UI (Optimistic Update)
+                                        if (isClosing) setClosedDays(prev => [...prev, dateStr]);
+                                        else setClosedDays(prev => prev.filter(d => d !== dateStr));
 
                                         if (GOOGLE_WEBHOOK_URL) {
                                             try {
-                                                await fetch(GOOGLE_WEBHOOK_URL, {
+                                                const res = await fetch(GOOGLE_WEBHOOK_URL, {
                                                     method: 'POST',
                                                     redirect: 'follow',
                                                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                                                     body: JSON.stringify({ type: 'toggle_day', date: dateStr })
                                                 });
-                                            } catch(e) {}
+                                                
+                                                // 確保後台執行完畢後再解除鎖定
+                                                await res.text();
+                                            } catch(e) {
+                                                console.error('Toggle Day Error', e);
+                                            }
                                         }
+                                        setIsToggling(false);
                                     }}
-                                    className={`w-full group relative flex items-center justify-between px-6 py-4 mb-6 border-2 transition-all duration-300 rounded-xl select-none outline-none ${isCurrentDayClosed ? 'bg-gray-100 border-gray-300 text-gray-500' : 'bg-white border-[#E6DED5] hover:border-red-300 hover:bg-red-50 text-[#4A3F35]'}`}
+                                    className={`w-full group relative flex items-center justify-between px-6 py-4 mb-6 border-2 transition-all duration-300 rounded-xl select-none outline-none ${isToggling ? 'btn-processing' : ''} ${isCurrentDayClosed ? 'bg-gray-100 border-gray-300 text-gray-500' : 'bg-white border-[#E6DED5] hover:border-red-300 hover:bg-red-50 text-[#4A3F35]'}`}
                                 >
-                                    <span className="text-base font-sans tracking-widest font-bold">{isCurrentDayClosed ? '整天已關閉' : '關閉整天時段'}</span>
-                                    <span className={`text-xs tracking-widest px-3 py-1.5 transition-colors rounded-lg font-bold ${isCurrentDayClosed ? 'bg-white text-gray-500 border-2 border-gray-300' : 'bg-white text-[#8C7E71] border-2 border-[#E6DED5] group-hover:border-red-400 group-hover:text-red-500'}`}>
-                                        {isCurrentDayClosed ? '點擊重新開放' : '點擊關閉'}
+                                    <span className="text-base font-sans tracking-widest font-bold">
+                                        {isToggling ? '處理中...' : (isCurrentDayClosed ? '整天已關閉' : '關閉整天時段')}
                                     </span>
+                                    {!isToggling && (
+                                        <span className={`text-xs tracking-widest px-3 py-1.5 transition-colors rounded-lg font-bold ${isCurrentDayClosed ? 'bg-white text-gray-500 border-2 border-gray-300' : 'bg-white text-[#8C7E71] border-2 border-[#E6DED5] group-hover:border-red-400 group-hover:text-red-500'}`}>
+                                            {isCurrentDayClosed ? '點擊重新開放' : '點擊關閉'}
+                                        </span>
+                                    )}
                                 </button>
                             )}
 
-                            <div className={`space-y-4 flex-1 flex flex-col justify-center transition-opacity duration-300 ${isCurrentDayClosed ? 'opacity-30 pointer-events-none' : ''}`}>
+                            <div className={`space-y-4 flex-1 flex flex-col justify-center transition-opacity duration-300 ${isCurrentDayClosed && !isToggling ? 'opacity-30 pointer-events-none' : ''}`}>
                                 {isLoadingSlots ? (
                                     <div className="flex justify-center items-center h-full min-h-[150px]">
                                         <div className="loader border-[#E6DED5] border-top-[#4A3F35]"></div>
@@ -791,40 +815,48 @@
                                         const slotKey = `${formatDate(selectedDate)}-${time}`;
                                         const isBooked = bookedSlots.includes(slotKey);
                                         const isSelected = !isAdmin && selectedTime === time;
+                                        const isSlotToggling = togglingSlots[slotKey] === true;
 
                                         return (
                                             <button
                                                 key={idx}
-                                                disabled={!isAdmin && isBooked}
+                                                disabled={(!isAdmin && isBooked) || isSlotToggling || isToggling}
                                                 onClick={async () => {
                                                     if (isAdmin) {
+                                                        setTogglingSlots(prev => ({ ...prev, [slotKey]: true }));
                                                         lastLocalUpdate.current = Date.now();
                                                         const isClosingSlot = !isBooked;
+                                                        
+                                                        // 樂觀更新 UI
                                                         const newBooked = isClosingSlot ? [...bookedSlots, slotKey] : bookedSlots.filter(k => k !== slotKey);
                                                         setBookedSlots(newBooked);
                                                         
                                                         if (GOOGLE_WEBHOOK_URL) {
                                                             try {
-                                                                await fetch(GOOGLE_WEBHOOK_URL, {
+                                                                const res = await fetch(GOOGLE_WEBHOOK_URL, {
                                                                     method: 'POST',
                                                                     redirect: 'follow',
                                                                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                                                                     body: JSON.stringify({ type: 'toggle_slot', slot: slotKey })
                                                                 });
-                                                            } catch(e) {}
+                                                                await res.text();
+                                                            } catch(e) {
+                                                                console.error('Toggle Slot Error', e);
+                                                            }
                                                         }
+                                                        setTogglingSlots(prev => ({ ...prev, [slotKey]: false }));
                                                     } else {
                                                         setSelectedTime(time);
                                                     }
                                                 }}
-                                                className={`w-full group relative flex items-center justify-between px-8 py-5 border-2 transition-all duration-300 rounded-xl select-none outline-none ${isBooked ? (isAdmin ? 'bg-red-50 border-red-300 text-red-800' : 'bg-[#F3F4F6] border-[#E5E7EB] cursor-not-allowed opacity-70') : isSelected ? 'bg-[#F3EDE7] border-[#C19A6B] text-[#4A3F35] shadow-sm scale-[1.02]' : 'bg-white border-[#E6DED5] hover:border-[#C19A6B] hover:bg-[#FAF7F2] text-[#4A3F35]'}`}
+                                                className={`w-full group relative flex items-center justify-between px-8 py-5 border-2 transition-all duration-300 rounded-xl select-none outline-none ${isSlotToggling || isToggling ? 'btn-processing' : ''} ${isBooked ? (isAdmin ? 'bg-red-50 border-red-300 text-red-800' : 'bg-[#F3F4F6] border-[#E5E7EB] cursor-not-allowed opacity-70') : isSelected ? 'bg-[#F3EDE7] border-[#C19A6B] text-[#4A3F35] shadow-sm scale-[1.02]' : 'bg-white border-[#E6DED5] hover:border-[#C19A6B] hover:bg-[#FAF7F2] text-[#4A3F35]'}`}
                                             >
                                                 <span className={`text-xl font-sans tracking-widest font-bold transition-colors ${isBooked && !isAdmin ? 'line-through text-gray-400' : 'text-[#4A3F35]'}`}>
                                                     {time}
                                                 </span>
                                                 
-                                                <span className={`text-xs tracking-widest px-4 py-2 transition-colors rounded-lg font-bold whitespace-nowrap ${isBooked ? (isAdmin ? '點擊開放' : '已額滿') : (isAdmin ? '點擊關閉' : (isSelected ? '已選擇' : '可預約'))} ${isSelected ? 'bg-[#C19A6B] text-white shadow-sm border-2 border-[#C19A6B]' : 'bg-white text-[#8C7E71] border-2 border-[#E6DED5] group-hover:border-[#C19A6B] group-hover:text-[#C19A6B]'}`}>
-                                                    {isBooked ? (isAdmin ? '點擊開放' : '已額滿') : (isAdmin ? '點擊關閉' : (isSelected ? '已選擇' : '可預約'))}
+                                                <span className={`text-xs tracking-widest px-4 py-2 transition-colors rounded-lg font-bold whitespace-nowrap ${isSlotToggling ? '處理中' : isBooked ? (isAdmin ? '點擊開放' : '已額滿') : (isAdmin ? '點擊關閉' : (isSelected ? '已選擇' : '可預約'))} ${isSelected && !isSlotToggling ? 'bg-[#C19A6B] text-white shadow-sm border-2 border-[#C19A6B]' : 'bg-white text-[#8C7E71] border-2 border-[#E6DED5] group-hover:border-[#C19A6B] group-hover:text-[#C19A6B]'}`}>
+                                                    {isSlotToggling ? '...' : isBooked ? (isAdmin ? '點擊開放' : '已額滿') : (isAdmin ? '點擊關閉' : (isSelected ? '已選擇' : '可預約'))}
                                                 </span>
                                             </button>
                                         );
