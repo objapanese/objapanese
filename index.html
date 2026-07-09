@@ -441,19 +441,19 @@
                             {PURCHASE_PLANS.map(plan => {
                                 const isSelected = formData.plan === plan.id;
                                 return (
-                                    <button key={plan.id} onClick={() => setFormData({...formData, plan: plan.id})} className={`w-full text-left cursor-pointer border-2 p-4 sm:p-5 transition-all duration-300 relative flex justify-between items-center rounded-xl select-none outline-none ${isSelected ? 'border-[#C19A6B] bg-[#F3EDE7] shadow-md' : 'border-[#E6DED5] bg-white hover:border-[#C19A6B] hover:bg-[#FAF7F2]'}`}>
-                                        <div className="flex flex-col pl-1 sm:pl-2 overflow-hidden">
-                                            <div className="flex items-center gap-1.5 sm:gap-2 mb-1 whitespace-nowrap">
+                                    <button key={plan.id} onClick={() => setFormData({...formData, plan: plan.id})} className={`w-full text-left cursor-pointer border-2 p-4 sm:p-5 transition-all duration-300 relative flex flex-col sm:flex-row sm:justify-between items-start sm:items-center rounded-xl select-none outline-none gap-2 sm:gap-0 ${isSelected ? 'border-[#C19A6B] bg-[#F3EDE7] shadow-md' : 'border-[#E6DED5] bg-white hover:border-[#C19A6B] hover:bg-[#FAF7F2]'}`}>
+                                        <div className="flex flex-col pl-1 sm:pl-2 w-full">
+                                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
                                                 <span className={`font-serif tracking-widest text-[17px] sm:text-xl font-bold text-[#4A3F35] flex items-center whitespace-nowrap`}>
                                                     {plan.name.split(/(\d+)/).map((part, i) => /\d+/.test(part) ? <span key={i} className={`font-sans font-black italic text-[#C19A6B] mr-0.5 tracking-normal leading-none drop-shadow-sm ${part === '20' ? 'text-[22px] sm:text-[24px]' : 'text-[24px] sm:text-[26px]'}`}>{part}</span> : part)}
                                                 </span>
-                                                <div className="flex gap-1.5 sm:gap-2 items-center whitespace-nowrap">
+                                                <div className="flex gap-1.5 sm:gap-2 items-center flex-wrap mt-1 sm:mt-0">
                                                     {plan.subtitle && <span className={`text-[10px] sm:text-[11.5px] px-2 sm:px-3 py-1 sm:py-1.5 rounded-md font-bold transition-colors shadow-sm whitespace-nowrap ${isSelected ? 'bg-[#C19A6B] text-white' : 'bg-[#FAF7F2] border border-[#E6DED5] text-red-500'}`}>{plan.subtitle}</span>}
                                                 </div>
                                             </div>
-                                            {plan.originalPrice && <span className="text-[10px] sm:text-[11px] text-[#8C7E71] tracking-widest line-through mt-0.5 sm:mt-1 font-sans">原價 NT$ {plan.originalPrice.toLocaleString()}</span>}
+                                            {plan.originalPrice && <span className="text-[10px] sm:text-[11px] text-[#8C7E71] tracking-widest line-through mt-0.5 sm:mt-1 font-sans block">原價 NT$ {plan.originalPrice.toLocaleString()}</span>}
                                         </div>
-                                        <div className="text-right flex-shrink-0 ml-2 sm:ml-4">
+                                        <div className="text-left sm:text-right flex-shrink-0 ml-1 sm:ml-4 w-full sm:w-auto border-t sm:border-t-0 border-mocha/30 sm:border-transparent pt-2 sm:pt-0 mt-1 sm:mt-0">
                                             <span className={`text-lg sm:text-xl font-sans tracking-wider font-bold whitespace-nowrap ${isSelected ? 'text-[#C19A6B]' : 'text-[#4A3F35]'}`}>NT${plan.price.toLocaleString()}</span>
                                         </div>
                                     </button>
@@ -791,41 +791,41 @@
                 return (
                     <div className="fade-in max-w-lg mx-auto space-y-6">
                         <div className="p-8 line-border bg-white relative">
-                            <h3 className="text-2xl font-serif mb-8 text-center tracking-widest border-b-2 border-mocha pb-4 text-ink font-bold">確認預約明細</h3>
+                            <h3 className="text-[22px] font-serif mb-8 text-center tracking-widest border-b-2 border-mocha pb-4 text-ink font-bold">確認預約明細</h3>
                             <div className="space-y-4 pb-6 mb-6 text-base border-b-2 border-mocha">
                                 <div className="flex justify-between items-center pb-2 border-b border-mocha/40">
-                                    <span className="text-ink-light tracking-widest text-sm font-bold">上課時間</span><span className="font-sans text-ink font-bold text-lg">{formatDisplayDate(selectedDate)} {selectedTime}</span>
+                                    <span className="text-ink-light tracking-widest text-[14px] font-bold">上課時間</span><span className="font-sans text-ink font-bold text-[17px]">{formatDisplayDate(selectedDate)} {selectedTime}</span>
                                 </div>
                                 <div className="flex flex-col pt-2">
-                                    <label className="text-ink-light tracking-widest text-sm font-bold mb-2">課程代碼 <span className="text-accent">*</span></label>
+                                    <label className="text-ink-light tracking-widest text-[14px] font-bold mb-2">課程代碼 <span className="text-accent">*</span></label>
                                     <input 
                                         type="text" 
                                         name="prepaidCode"
                                         value={formData.prepaidCode}
                                         onChange={handleInputChange}
-                                        className="w-full bg-milk border-2 border-mocha px-4 py-3 focus:outline-none focus:border-ink transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl shadow-sm tracking-widest text-base"
+                                        className="w-full bg-milk border-2 border-mocha px-4 py-3 focus:outline-none focus:border-ink transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl shadow-sm tracking-widest text-[18px]"
                                         placeholder="請輸入您的課程包代碼"
                                     />
                                 </div>
                             </div>
-                            <div className="flex justify-between items-center mb-6 bg-milk p-4 rounded-xl border border-mocha">
-                                <span className="font-sans text-base tracking-widest text-ink-light font-bold">扣除堂數</span><span className="text-lg font-sans text-ink font-bold whitespace-nowrap">1 堂</span>
+                            <div className="flex justify-between items-end mb-6 bg-milk p-4 rounded-xl border border-mocha">
+                                <span className="font-sans text-[15px] tracking-widest text-ink-light font-bold">扣除堂數</span><span className="text-[17px] font-sans text-ink font-bold whitespace-nowrap">1 堂</span>
                             </div>
                             {errorMsg && <div className="mb-6 text-center text-red-600 bg-red-50 py-3 rounded-lg border border-red-200 text-sm tracking-widest font-bold">{errorMsg}</div>}
                             {isPaying ? (
-                                <div className="w-full py-4 border-2 border-[#4A3F35] bg-white flex items-center justify-center space-x-3 rounded-full"><div className="loader"></div><span className="text-sm tracking-widest text-[#4A3F35] font-bold">處理中...</span></div>
+                                <div className="w-full py-4 border-2 border-[#4A3F35] bg-white flex items-center justify-center space-x-3 rounded-full"><div className="loader"></div><span className="text-base tracking-widest text-[#4A3F35] font-bold">處理中...</span></div>
                             ) : (
                                 <button 
                                     onClick={handlePayment} 
                                     disabled={!formData.prepaidCode.trim()}
-                                    className={`w-full py-4 transition-all duration-300 font-sans tracking-widest flex items-center justify-center text-base rounded-full shadow-md font-bold select-none outline-none border-2 ${!formData.prepaidCode.trim() ? 'bg-[#E6DED5] text-[#8C7E71] border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95'}`}
+                                    className={`w-full py-4 transition-all duration-300 font-sans tracking-widest flex items-center justify-center text-[18px] rounded-full shadow-md font-bold select-none outline-none border-2 ${!formData.prepaidCode.trim() ? 'bg-[#E6DED5] text-[#8C7E71] border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95'}`}
                                 >
                                     確認預約課程
                                 </button>
                             )}
                         </div>
                         {!isPaying && (
-                            <div className="flex justify-center"><button onClick={handleBack} className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors px-4 py-2 font-bold select-none outline-none">返回修改時段</button></div>
+                            <div className="flex justify-center"><button onClick={handleBack} className="text-base tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors px-4 py-2 font-bold select-none outline-none">返回修改時段</button></div>
                         )}
                     </div>
                 );
