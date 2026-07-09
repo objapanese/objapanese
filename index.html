@@ -445,7 +445,7 @@
                             </div>
                             
                             <p className="text-[13px] text-[#8C7E71] tracking-[0.1em] leading-relaxed mb-8 px-2 min-h-[40px] font-bold">
-                                適合首次報名上課，或原有<br className="hidden sm:block"/>課程堂數用盡需補購的同學。
+                                首次報名上課，<br className="hidden sm:block"/>或堂數用盡需補購的同學。
                             </p>
                             
                             <div className="mt-auto px-8 py-2.5 bg-[#FAF7F2] border border-[#E6DED5] text-[#4A3F35] rounded-full text-sm font-bold tracking-widest flex items-center justify-center group-hover:bg-[#F3EDE7] group-hover:border-[#C19A6B] transition-all w-4/5 max-w-[200px]">
@@ -473,7 +473,7 @@
                             </div>
                             
                             <p className="text-[13px] text-[#8C7E71] tracking-[0.1em] leading-relaxed mb-8 px-2 min-h-[40px] font-bold">
-                                已經持有課程包專屬代碼，<br className="hidden sm:block"/>需彈性安排上課時間的同學。
+                                已經持有課程包代碼，<br className="hidden sm:block"/>需彈性安排上課時間的同學。
                             </p>
                             
                             <div className="mt-auto px-8 py-2.5 bg-[#FAF7F2] border border-[#E6DED5] text-[#4A3F35] rounded-full text-sm font-bold tracking-widest flex items-center justify-center group-hover:bg-[#F3EDE7] group-hover:border-[#C19A6B] transition-all w-4/5 max-w-[200px]">
@@ -501,7 +501,7 @@
                             </div>
                             
                             <p className="text-[13px] text-[#8C7E71] tracking-[0.1em] leading-relaxed mb-8 px-2 min-h-[40px] font-bold">
-                                查詢已預約的課程時間與上課資訊，<br className="hidden sm:block"/>方便隨時掌握學習進度。
+                                查詢已預約的課程，<br className="hidden sm:block"/>方便隨時掌握上課資訊。
                             </p>
                             
                             <div className="mt-auto px-8 py-2.5 bg-[#FAF7F2] border border-[#E6DED5] text-[#4A3F35] rounded-full text-sm font-bold tracking-widest flex items-center justify-center group-hover:bg-[#F3EDE7] group-hover:border-[#C19A6B] transition-all w-4/5 max-w-[200px]">
@@ -521,7 +521,6 @@
                 <div className="fade-in max-w-lg mx-auto space-y-6 pt-4">
                     <div className="text-center mb-6">
                         <h2 className="text-2xl font-serif mb-2 text-ink tracking-wider font-bold">查詢課程紀錄</h2>
-                        <p className="text-sm text-ink-light tracking-widest font-bold">請輸入您的專屬課程代碼</p>
                     </div>
                     <div className="p-8 line-border bg-white">
                         <div className="space-y-6">
@@ -531,7 +530,7 @@
                                     value={queryCode}
                                     onChange={(e) => setQueryCode(e.target.value)}
                                     className="w-full bg-milk border-2 border-mocha px-4 py-4 focus:outline-none focus:border-ink focus:bg-white transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl text-center tracking-[0.2em] text-lg" 
-                                    placeholder="輸入課程代碼"
+                                    placeholder="請輸入課程包代碼"
                                     onKeyDown={(e) => e.key === 'Enter' && handleQuery()}
                                 />
                             </div>
