@@ -198,6 +198,33 @@
             const [queryCode, setQueryCode] = useState('');
             const [isQuerying, setIsQuerying] = useState(false);
             const [queryResult, setQueryResult] = useState(null);
+            const [selectedFilterMonth, setSelectedFilterMonth] = useState('all');
+
+            // --- 提取至最上層的 Hooks ---
+            const availableMonths = useMemo(() => {
+                if (!queryResult || !queryResult.classes) return [];
+                const months = new Set();
+                queryResult.classes.forEach(cls => {
+                    const match = cls.date.match(/(\d{4})[/-](\d{1,2})/);
+                    if (match) {
+                        months.add(`${match[1]}-${match[2].padStart(2, '0')}`);
+                    }
+                });
+                return Array.from(months).sort().reverse();
+            }, [queryResult]);
+
+            const filteredClasses = useMemo(() => {
+                if (!queryResult || !queryResult.classes) return [];
+                if (selectedFilterMonth === 'all') return queryResult.classes;
+                return queryResult.classes.filter(cls => {
+                    const match = cls.date.match(/(\d{4})[/-](\d{1,2})/);
+                    if (match) {
+                        return `${match[1]}-${match[2].padStart(2, '0')}` === selectedFilterMonth;
+                    }
+                    return false;
+                });
+            }, [queryResult, selectedFilterMonth]);
+            // -----------------------------
 
             const resetAppToHome = () => {
                 setMode(null);
@@ -211,6 +238,7 @@
                 setErrorMsg("");
                 setQueryCode('');
                 setQueryResult(null);
+                setSelectedFilterMonth('all');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
 
@@ -300,6 +328,7 @@
                     setMode(null);
                     setQueryResult(null);
                     setErrorMsg("");
+                    setSelectedFilterMonth('all');
                 } else {
                     setStep(step - 1);
                 }
@@ -413,6 +442,7 @@
                             remaining: result.remaining,
                             classes: result.classes || []
                         });
+                        setSelectedFilterMonth('all');
                         setStep(2);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     } else {
@@ -518,6 +548,87 @@
                 </div>
             );
 
+            const renderQueryStep2 = () => {
+                const availableMonths = useMemo(() => {
+                    if (!queryResult || !queryResult.classes) return [];
+                    const months = new Set();
+                    queryResult.classes.forEach(cls => {
+                        const match = cls.date.match(/(\d{4})[/-](\d{1,2})/);
+                        if (match) {
+                            months.add(`${match[1]}-${match[2].padStart(2, '0')}`);
+                        }
+                    });
+                    return Array.from(months).sort().reverse();
+                }, [queryResult]);
+
+                const filteredClasses = useMemo(() => {
+                    if (!queryResult || !queryResult.classes) return [];
+                    if (selectedFilterMonth === 'all') return queryResult.classes;
+                    return queryResult.classes.filter(cls => {
+                        const match = cls.date.match(/(\d{4})[/-](\d{1,2})/);
+                        if (match) {
+                            return `${match[1]}-${match[2].padStart(2, '0')}` === selectedFilterMonth;
+                        }
+                        return false;
+                    });
+                }, [queryResult, selectedFilterMonth]);
+
+                return (
+                    <div className="fade-in max-w-lg mx-auto space-y-6 pt-4">
+                        <div className="text-center mb-6">
+                            <h2 className="text-2xl font-serif mb-2 text-ink tracking-wider font-bold">查詢結果</h2>
+                        </div>
+                        
+                        <div className="p-8 line-border bg-white">
+                            <div className="bg-accent-light border border-accent rounded-xl p-4 text-center mb-6 shadow-sm">
+                                <p className="text-ink text-sm tracking-widest font-bold">您的課程包剩餘：<span className="text-3xl ml-2 text-ink font-sans">{queryResult?.remaining} <span className="text-xl">堂</span></span></p>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center mb-2 pb-3 border-b-2 border-mocha min-h-[44px]">
+                                    <p className="text-ink-light text-[15px] tracking-widest font-bold">已預約的課程：</p>
+                                    {availableMonths.length > 0 && (
+                                        <select 
+                                            value={selectedFilterMonth} 
+                                            onChange={(e) => setSelectedFilterMonth(e.target.value)}
+                                            className="bg-milk border border-mocha text-ink px-3.5 py-2 rounded-lg focus:outline-none focus:border-ink font-bold text-[13px] tracking-widest cursor-pointer appearance-none shadow-sm"
+                                            style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234A3F35%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right .6rem top 50%', backgroundSize: '.55rem auto', paddingRight: '2rem' }}
+                                        >
+                                            <option value="all">全部月份</option>
+                                            {availableMonths.map(m => {
+                                                const [yyyy, mm] = m.split('-');
+                                                return <option key={m} value={m}>{`${yyyy}年 ${parseInt(mm)}月`}</option>;
+                                            })}
+                                        </select>
+                                    )}
+                                </div>
+                                {filteredClasses.length > 0 ? (
+                                    filteredClasses.map((cls, idx) => (
+                                        <div key={idx} className={`p-5 rounded-xl border-2 flex justify-between items-center transition-all ${cls.status === 'upcoming' ? 'bg-white border-mocha hover:border-[#C19A6B] shadow-sm' : 'bg-gray-50 border-gray-200 opacity-60'}`}>
+                                            <div className="flex flex-col">
+                                                <span className={`font-sans font-bold tracking-wider text-lg ${cls.status === 'upcoming' ? 'text-ink' : 'text-gray-500 line-through'}`}>{cls.date}</span>
+                                                <span className={`text-sm mt-1 font-bold ${cls.status === 'upcoming' ? 'text-[#C19A6B]' : 'text-gray-400'}`}>{cls.time}</span>
+                                            </div>
+                                            <div>
+                                                <span className={`text-xs px-3 py-1.5 rounded-md font-bold tracking-widest shadow-sm ${cls.status === 'upcoming' ? 'bg-[#C19A6B] text-white' : 'bg-gray-200 text-gray-500'}`}>
+                                                    {cls.status === 'upcoming' ? '即將到來' : '已完成'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-center text-ink-light text-sm tracking-widest py-6 bg-milk rounded-xl border border-mocha">該月份目前沒有預約紀錄喔！</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex justify-center pt-2">
+                            <button onClick={handleBack} className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors flex items-center font-bold px-4 py-2 select-none outline-none">返回重新查詢</button>
+                        </div>
+                    </div>
+                );
+            };
+
             const renderQueryStep1 = () => (
                 <div className="fade-in max-w-lg mx-auto space-y-6 pt-4">
                     <div className="text-center mb-6">
@@ -557,46 +668,6 @@
                     </div>
                 </div>
             );
-
-            const renderQueryStep2 = () => (
-                <div className="fade-in max-w-lg mx-auto space-y-6 pt-4">
-                    <div className="text-center mb-6">
-                        <h2 className="text-2xl font-serif mb-2 text-ink tracking-wider font-bold">查詢結果</h2>
-                    </div>
-                    
-                    <div className="p-8 line-border bg-white">
-                        <div className="bg-accent-light border border-accent rounded-xl p-4 text-center mb-6 shadow-sm">
-                            <p className="text-ink text-sm tracking-widest font-bold">您的課程包剩餘：<span className="text-3xl ml-2 text-ink font-sans">{queryResult?.remaining} <span className="text-xl">堂</span></span></p>
-                        </div>
-                        
-                        <div className="space-y-4">
-                            <p className="text-ink-light text-sm tracking-widest font-bold mb-2 pb-2 border-b-2 border-mocha">已預約的課程：</p>
-                            {queryResult?.classes?.length > 0 ? (
-                                queryResult.classes.map((cls, idx) => (
-                                    <div key={idx} className={`p-5 rounded-xl border-2 flex justify-between items-center transition-all ${cls.status === 'upcoming' ? 'bg-white border-mocha hover:border-[#C19A6B] shadow-sm' : 'bg-gray-50 border-gray-200 opacity-60'}`}>
-                                        <div className="flex flex-col">
-                                            <span className={`font-sans font-bold tracking-wider text-lg ${cls.status === 'upcoming' ? 'text-ink' : 'text-gray-500 line-through'}`}>{cls.date}</span>
-                                            <span className={`text-sm mt-1 font-bold ${cls.status === 'upcoming' ? 'text-[#C19A6B]' : 'text-gray-400'}`}>{cls.time}</span>
-                                        </div>
-                                        <div>
-                                            <span className={`text-xs px-3 py-1.5 rounded-md font-bold tracking-widest shadow-sm ${cls.status === 'upcoming' ? 'bg-[#C19A6B] text-white' : 'bg-gray-200 text-gray-500'}`}>
-                                                {cls.status === 'upcoming' ? '即將到來' : '已完成'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="text-center text-ink-light text-sm tracking-widest py-6 bg-milk rounded-xl border border-mocha">目前沒有任何預約紀錄喔！</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="flex justify-center pt-2">
-                        <button onClick={handleBack} className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors flex items-center font-bold px-4 py-2 select-none outline-none">返回重新查詢</button>
-                    </div>
-                </div>
-            );
-
 
             const renderPurchaseStep1 = () => (
                 <div className="fade-in max-w-lg mx-auto space-y-6">
