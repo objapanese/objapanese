@@ -24,10 +24,6 @@
                             'accent': '#C19A6B',     /* 焦糖奶茶色 (主要按鈕與選取狀態) */
                             'accent-hover': '#A88256',
                             'accent-light': '#F3EDE7'/* 淺焦糖底色 (卡片選取狀態) */
-                        },
-                        fontFamily: {
-                            'sans': ['"Noto Sans TC"', 'sans-serif'],
-                            'serif': ['"Noto Serif TC"', 'serif'],
                         }
                     }
                 }
@@ -40,23 +36,27 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@400;500;700&display=swap');
         
         * {
-            -webkit-tap-highlight-color: transparent; /* 徹底移除手機點擊反白框 */
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background-color: #FAF7F2; /* 奶咖底色 */
+            background-color: #FAF7F2;
             background-image: 
                 linear-gradient(rgba(212, 196, 183, 0.25) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(212, 196, 183, 0.25) 1px, transparent 1px);
             background-size: 30px 30px;
             color: #4A3F35;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+
+        h1, h2, h3, .font-serif {
+            font-family: 'Noto Serif TC', serif;
         }
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #E6DED5; border-radius: 4px; }
 
-        /* 純實體白底卡片，無任何玻璃效果 */
         .line-border { 
             background-color: #FFFFFF;
             border: 2px solid #E6DED5;
@@ -98,10 +98,7 @@
         const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
         const GOOGLE_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyetnlJlnFp8atdReeRS4Rx8bA1IVDVialahLq2iHj4ARTGLAXWcgEE0otjH-edDub9mQ/exec';
-
         const TIME_SLOTS = ["19:00~19:50", "20:00~20:50", "21:00~21:50"];
-
-        // 購課專用的方案列表
         const PURCHASE_PLANS = [
             { id: '1', name: '單堂課程', price: 700, originalPrice: null, tag: '', subtitle: '' },
             { id: '8', name: '8堂課程包', price: 4800, originalPrice: 5600, tag: '', subtitle: '每堂只要 NT$600' },
@@ -193,10 +190,9 @@
             const [isToggling, setIsToggling] = useState(false); 
             const [togglingSlots, setTogglingSlots] = useState({});
 
-            // 查詢專用的 state
             const [queryCode, setQueryCode] = useState('');
             const [isQuerying, setIsQuerying] = useState(false);
-            const [queryResult, setQueryResult] = useState(null); // { remaining: 5, classes: [...] } 或 null
+            const [queryResult, setQueryResult] = useState(null);
 
             const resetAppToHome = () => {
                 setMode(null);
@@ -240,9 +236,7 @@
             }, [closedDays]);
 
             const fetchBookedSlots = useCallback(async (force = false) => {
-                if (!force && Date.now() - lastLocalUpdate.current < 15000) {
-                    return; 
-                }
+                if (!force && Date.now() - lastLocalUpdate.current < 15000) return;
                 if (!GOOGLE_WEBHOOK_URL) {
                     setBookedSlots(prev => prev.length === 0 ? initialBookedSlots : prev);
                     setIsLoadingSlots(false);
@@ -437,7 +431,7 @@
                             <div className="absolute top-12 right-14 w-3 h-3 rounded-full bg-[#FAF7F2] opacity-80"></div>
                             
                             <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
-                                <span className="absolute">🛍️</span>
+                                <span className="absolute">📚</span>
                             </div>
                             
                             <h3 className="text-[26px] font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">報名課程</h3>
@@ -465,7 +459,7 @@
                             <div className="absolute top-12 right-14 w-3 h-3 rounded-full bg-[#FAF7F2] opacity-80"></div>
                             
                             <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
-                                <span className="absolute">📅</span>
+                                <span className="absolute">🗓️</span>
                             </div>
                             
                             <h3 className="text-[26px] font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">預約上課</h3>
@@ -527,7 +521,7 @@
                 <div className="fade-in max-w-lg mx-auto space-y-6 pt-4">
                     <div className="text-center mb-6">
                         <h2 className="text-2xl font-serif mb-2 text-ink tracking-wider font-bold">查詢課程紀錄</h2>
-                        <p className="text-sm text-ink-light tracking-widest font-bold">請輸入您的專屬課程代碼（測試請輸入 demo）</p>
+                        <p className="text-sm text-ink-light tracking-widest font-bold">請輸入您的專屬課程代碼</p>
                     </div>
                     <div className="p-8 line-border bg-white">
                         <div className="space-y-6">
@@ -720,7 +714,6 @@
                 const now = new Date();
                 const twentyFourHoursLater = new Date(now.getTime() + (24 * 60 * 60 * 1000));
                 
-                // 開放預約的三個月
                 const todayMidnight = new Date();
                 todayMidnight.setHours(0, 0, 0, 0);
                 const maxDate = new Date(todayMidnight);
@@ -837,10 +830,7 @@
                                         const dateStr = formatDate(selectedDate);
                                         const isClosing = !isCurrentDayClosed; 
                                         
-                                        // 樂觀更新UI
                                         setClosedDays(prev => isClosing ? [...prev, dateStr] : prev.filter(d => d !== dateStr));
-                                        
-                                        // 暫停自動輪詢覆蓋
                                         lastLocalUpdate.current = Date.now();
 
                                         if (GOOGLE_WEBHOOK_URL) {
@@ -852,19 +842,15 @@
                                                     body: JSON.stringify({ 
                                                         type: 'toggle_day', 
                                                         date: dateStr,
-                                                        action: isClosing ? 'close' : 'open' // 加入明確動作避免後台搞混
+                                                        action: isClosing ? 'close' : 'open'
                                                     })
                                                 });
                                                 
                                                 await res.text();
-                                                
-                                                // 後台跑完後，強制重新抓取確保Google端真的存成功了！
                                                 lastLocalUpdate.current = 0; 
                                                 await fetchBookedSlots(true);
-                                                
                                             } catch(e) {
                                                 console.error('Toggle Day Error', e);
-                                                // 失敗的話退回原本狀態
                                                 setClosedDays(prev => !isClosing ? [...prev, dateStr] : prev.filter(d => d !== dateStr));
                                             }
                                         }
@@ -904,7 +890,6 @@
                                                         setTogglingSlots(prev => ({ ...prev, [slotKey]: true }));
                                                         const isClosingSlot = !isBooked;
                                                         
-                                                        // 樂觀更新
                                                         setBookedSlots(prev => isClosingSlot ? [...prev, slotKey] : prev.filter(k => k !== slotKey));
                                                         lastLocalUpdate.current = Date.now();
                                                         
@@ -921,8 +906,6 @@
                                                                     })
                                                                 });
                                                                 await res.text();
-                                                                
-                                                                // 強制重新抓取確保真的存成功了
                                                                 lastLocalUpdate.current = 0;
                                                                 await fetchBookedSlots(true);
                                                             } catch(e) {
