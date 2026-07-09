@@ -139,7 +139,6 @@
             return slots;
         };
 
-        // 動態進度條組件
         const StepIndicator = ({ currentStep, mode, isAdmin }) => {
             if (!mode || isAdmin) return null; 
             
@@ -191,7 +190,6 @@
             const [errorMsg, setErrorMsg] = useState("");
             const [viewDate, setViewDate] = useState(new Date());
 
-            // 防止連點的狀態
             const [isToggling, setIsToggling] = useState(false); 
             const [togglingSlots, setTogglingSlots] = useState({});
 
@@ -234,7 +232,6 @@
                 localStorage.setItem('japanese_tutor_closed_days', JSON.stringify(closedDays));
             }, [closedDays]);
 
-            // 獨立出抓取函式，方便手動強制更新
             const fetchBookedSlots = useCallback(async (force = false) => {
                 if (!force && Date.now() - lastLocalUpdate.current < 15000) {
                     return; 
@@ -267,7 +264,6 @@
                 }
             }, [initialBookedSlots]);
 
-            // 自動輪詢
             useEffect(() => {
                 let interval;
                 if (!mode || (mode === 'book' && (step === 1 || step === 2))) {
@@ -287,8 +283,9 @@
                     if (step === 1 && formData.name && formData.email) setStep(2);
                     else if (step === 2 && formData.plan) setStep(3);
                 } else if (mode === 'book') {
+                    // 預約流程：步驟二不再檢查代碼，只需選擇時間
                     if (step === 1 && selectedDate) setStep(2);
-                    else if (step === 2 && (isAdmin || (selectedTime && formData.prepaidCode))) setStep(3);
+                    else if (step === 2 && (isAdmin || selectedTime)) setStep(3);
                 }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
@@ -382,7 +379,6 @@
                 setFormData({ ...formData, [e.target.name]: e.target.value });
             };
 
-            // 首頁
             const renderHome = () => (
                 <div className="fade-in max-w-3xl mx-auto space-y-6 pt-4">
                     <h2 className="text-2xl font-serif mb-8 text-center text-ink tracking-wider font-bold">請選擇服務項目</h2>
@@ -406,13 +402,11 @@
                 </div>
             );
 
-            // ================= 購買課程 Flow =================
-
             const renderPurchaseStep1 = () => (
                 <div className="fade-in max-w-lg mx-auto space-y-6">
                     <div className="text-center mb-6">
                         <h2 className="text-2xl font-serif mb-2 text-ink tracking-wider font-bold">填寫基本資料</h2>
-                        <p className="text-sm text-ink-light tracking-widest font-bold">為您建立訂單與課程紀錄</p>
+                        <p className="text-sm text-ink-light tracking-widest font-bold">為您建立課程紀錄</p>
                     </div>
                     <div className="p-8 line-border bg-white">
                         <div className="space-y-6">
@@ -422,7 +416,11 @@
                             </div>
                             <div>
                                 <label className="block text-sm tracking-widest text-ink mb-2 font-bold">電子郵件 <span className="text-accent">*</span></label>
-                                <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full bg-milk border-2 border-mocha px-4 py-3 focus:outline-none focus:border-ink focus:bg-white transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl" placeholder="將發送訂單資訊至此信箱"/>
+                                <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full bg-milk border-2 border-mocha px-4 py-3 focus:outline-none focus:border-ink focus:bg-white transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl" placeholder="預約後資訊將發送至此信箱"/>
+                            </div>
+                            <div>
+                                <label className="block text-sm tracking-widest text-ink mb-2 font-bold">預約課程</label>
+                                <input type="text" value="已聯絡老師" disabled className="w-full bg-gray-100 border-2 border-gray-200 px-4 py-3 text-gray-500 font-sans font-bold rounded-xl cursor-not-allowed select-none" />
                             </div>
                         </div>
                     </div>
@@ -520,8 +518,6 @@
                 );
             };
 
-            // ================= 預約上課 Flow =================
-
             const renderBookStep1 = () => {
                 const year = viewDate.getFullYear();
                 const month = viewDate.getMonth();
@@ -532,10 +528,11 @@
                 const now = new Date();
                 const twentyFourHoursLater = new Date(now.getTime() + (24 * 60 * 60 * 1000));
                 
+                // 開放預約的三個月
                 const todayMidnight = new Date();
                 todayMidnight.setHours(0, 0, 0, 0);
                 const maxDate = new Date(todayMidnight);
-                maxDate.setMonth(maxDate.getMonth() + 2);
+                maxDate.setMonth(maxDate.getMonth() + 3);
 
                 const calendarDays = [];
                 const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
@@ -762,16 +759,9 @@
                             </div>
                         </div>
 
-                        {!isAdmin && (
-                            <div className="p-6 sm:p-8 line-border flex flex-col relative bg-white shadow-sm">
-                                <label className="block text-sm tracking-widest text-ink mb-4 font-bold text-center">填寫課程包專屬代碼 <span className="text-accent">*</span></label>
-                                <input type="text" name="prepaidCode" value={formData.prepaidCode} onChange={handleInputChange} className="w-full bg-milk border-2 border-mocha px-4 py-4 focus:outline-none focus:border-ink transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl shadow-sm text-center tracking-widest text-lg" placeholder="請輸入代碼" />
-                            </div>
-                        )}
-
                         <div className="flex justify-between items-center pt-4">
                             <button onClick={handleBack} className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors font-bold select-none outline-none px-2">返回修改日期</button>
-                            <button onClick={handleNext} disabled={!isAdmin && (!selectedTime || !formData.prepaidCode)} className={`px-10 py-3 font-sans tracking-widest transition-all duration-300 rounded-full font-bold select-none outline-none ${(!isAdmin && (!selectedTime || !formData.prepaidCode)) ? 'bg-[#E6DED5] text-[#8C7E71] border-2 border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-2 border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95 shadow-lg'}`}>下一步：確認預約</button>
+                            <button onClick={handleNext} disabled={!isAdmin && !selectedTime} className={`px-10 py-3 font-sans tracking-widest transition-all duration-300 rounded-full font-bold select-none outline-none ${(!isAdmin && !selectedTime) ? 'bg-[#E6DED5] text-[#8C7E71] border-2 border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-2 border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95 shadow-lg'}`}>下一步：確認預約</button>
                         </div>
                     </div>
                 );
@@ -801,23 +791,37 @@
                 return (
                     <div className="fade-in max-w-lg mx-auto space-y-6">
                         <div className="p-8 line-border bg-white relative">
-                            <h3 className="text-xl font-serif mb-8 text-center tracking-widest border-b-2 border-mocha pb-4 text-ink font-bold">確認預約明細</h3>
-                            <div className="space-y-4 pb-6 mb-6 text-sm border-b-2 border-mocha">
+                            <h3 className="text-2xl font-serif mb-8 text-center tracking-widest border-b-2 border-mocha pb-4 text-ink font-bold">確認預約明細</h3>
+                            <div className="space-y-4 pb-6 mb-6 text-base border-b-2 border-mocha">
                                 <div className="flex justify-between items-center pb-2 border-b border-mocha/40">
-                                    <span className="text-ink-light tracking-widest text-xs font-bold">上課時間</span><span className="font-sans text-ink font-bold text-[15px]">{formatDisplayDate(selectedDate)} {selectedTime}</span>
+                                    <span className="text-ink-light tracking-widest text-sm font-bold">上課時間</span><span className="font-sans text-ink font-bold text-lg">{formatDisplayDate(selectedDate)} {selectedTime}</span>
                                 </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-ink-light tracking-widest text-xs font-bold">課程代碼</span><span className="font-sans text-ink font-bold tracking-widest text-[15px]">{formData.prepaidCode}</span>
+                                <div className="flex flex-col pt-2">
+                                    <label className="text-ink-light tracking-widest text-sm font-bold mb-2">課程代碼 <span className="text-accent">*</span></label>
+                                    <input 
+                                        type="text" 
+                                        name="prepaidCode"
+                                        value={formData.prepaidCode}
+                                        onChange={handleInputChange}
+                                        className="w-full bg-milk border-2 border-mocha px-4 py-3 focus:outline-none focus:border-ink transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl shadow-sm tracking-widest text-base"
+                                        placeholder="請輸入您的課程包代碼"
+                                    />
                                 </div>
                             </div>
-                            <div className="flex justify-between items-end mb-6 bg-milk p-4 rounded-xl border border-mocha">
-                                <span className="font-sans text-sm tracking-widest text-ink-light font-bold">扣除堂數</span><span className="text-3xl font-sans text-ink tracking-wider font-bold whitespace-nowrap">1 堂</span>
+                            <div className="flex justify-between items-center mb-6 bg-milk p-4 rounded-xl border border-mocha">
+                                <span className="font-sans text-base tracking-widest text-ink-light font-bold">扣除堂數</span><span className="text-lg font-sans text-ink font-bold whitespace-nowrap">1 堂</span>
                             </div>
                             {errorMsg && <div className="mb-6 text-center text-red-600 bg-red-50 py-3 rounded-lg border border-red-200 text-sm tracking-widest font-bold">{errorMsg}</div>}
                             {isPaying ? (
                                 <div className="w-full py-4 border-2 border-[#4A3F35] bg-white flex items-center justify-center space-x-3 rounded-full"><div className="loader"></div><span className="text-sm tracking-widest text-[#4A3F35] font-bold">處理中...</span></div>
                             ) : (
-                                <button onClick={handlePayment} className="w-full py-4 transition-all duration-300 font-sans tracking-widest flex items-center justify-center text-base rounded-full shadow-md font-bold select-none outline-none border-2 bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95">提交預約申請</button>
+                                <button 
+                                    onClick={handlePayment} 
+                                    disabled={!formData.prepaidCode.trim()}
+                                    className={`w-full py-4 transition-all duration-300 font-sans tracking-widest flex items-center justify-center text-base rounded-full shadow-md font-bold select-none outline-none border-2 ${!formData.prepaidCode.trim() ? 'bg-[#E6DED5] text-[#8C7E71] border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95'}`}
+                                >
+                                    確認預約課程
+                                </button>
                             )}
                         </div>
                         {!isPaying && (
