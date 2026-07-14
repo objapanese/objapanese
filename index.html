@@ -183,6 +183,10 @@
             
             const [selectedDate, setSelectedDate] = useState(null);
             const [selectedTime, setSelectedTime] = useState(null);
+
+            // --- 新增連續預約狀態 ---
+            const [recurringWeeks, setRecurringWeeks] = useState(1);
+            const [recurringDatesList, setRecurringDatesList] = useState([]);
             
             const [formData, setFormData] = useState({ name: '', email: '', level: '已與老師聯絡', plan: '', prepaidCode: '' });
             
@@ -200,7 +204,6 @@
             const [queryResult, setQueryResult] = useState(null);
             const [selectedFilterMonth, setSelectedFilterMonth] = useState('all');
 
-            // --- 提取至元件最上層的 Hooks ---
             const availableMonths = useMemo(() => {
                 if (!queryResult || !queryResult.classes) return [];
                 const months = new Set();
@@ -224,13 +227,14 @@
                     return false;
                 });
             }, [queryResult, selectedFilterMonth]);
-            // ---------------------------------
 
             const resetAppToHome = () => {
                 setMode(null);
                 setStep(1);
                 setSelectedDate(null);
                 setSelectedTime(null);
+                setRecurringWeeks(1);
+                setRecurringDatesList([]);
                 setFormData({ name: '', email: '', level: '已與老師聯絡', plan: '', prepaidCode: '' });
                 setIsPaying(false);
                 setPaymentSuccess(false);
@@ -317,8 +321,23 @@
                     if (step === 1 && formData.name && formData.email) setStep(2);
                     else if (step === 2 && formData.plan) setStep(3);
                 } else if (mode === 'book') {
-                    if (step === 1 && selectedDate) setStep(2);
-                    else if (step === 2 && (isAdmin || selectedTime)) setStep(3);
+                    if (step === 1 && selectedDate) {
+                        setStep(2);
+                        setRecurringWeeks(1); // 重新選擇日期時重設預約週數
+                    }
+                    else if (step === 2 && (isAdmin || selectedTime)) {
+                        if (!isAdmin) {
+                            // 根據選擇的週數建立日期清單，供第三步顯示及刪除
+                            const dates = [];
+                            let current = new Date(selectedDate);
+                            for (let i = 0; i < recurringWeeks; i++) {
+                                dates.push(new Date(current));
+                                current.setDate(current.getDate() + 7);
+                            }
+                            setRecurringDatesList(dates);
+                        }
+                        setStep(3);
+                    }
                 }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
@@ -342,6 +361,38 @@
                 if (mode === 'book') {
                     if (GOOGLE_WEBHOOK_URL) {
                         try {
+                            // 送出預約前，先在背景驗證課程代碼與剩餘堂數
+                            const queryResponse = await fetch(GOOGLE_WEBHOOK_URL, {
+                                method: 'POST',
+                                redirect: 'follow',
+                                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                body: JSON.stringify({
+                                    type: 'query_code',
+                                    code: formData.prepaidCode
+                                })
+                            });
+                            
+                            const queryResult = await queryResponse.json();
+
+                            if (queryResult.status !== 'success') {
+                                setIsPaying(false);
+                                setErrorMsg(queryResult.message || "查無此課程代碼，請確認是否輸入正確。");
+                                return;
+                            }
+
+                            // 確認要預約的總堂數 (依據目前明細中的日期數量)
+                            const requiredClasses = recurringDatesList.length;
+
+                            if (queryResult.remaining < requiredClasses) {
+                                setIsPaying(false);
+                                setErrorMsg(`剩餘堂數不足！您的課程包僅剩 ${queryResult.remaining} 堂，無法預約 ${requiredClasses} 堂課程。`);
+                                return;
+                            }
+
+                            // 格式化所有的日期
+                            const formattedDates = recurringDatesList.map(d => formatDate(d)).join(',');
+                            const formattedDisplayDates = recurringDatesList.map(d => formatDisplayDate(d)).join(', ');
+
                             const response = await fetch(GOOGLE_WEBHOOK_URL, {
                                 method: 'POST',
                                 redirect: 'follow',
@@ -351,10 +402,11 @@
                                     name: '', 
                                     email: '', 
                                     level: formData.level,
-                                    date: formatDate(selectedDate),
-                                    displayDate: formatDisplayDate(selectedDate), 
+                                    date: formattedDates,
+                                    displayDate: formattedDisplayDates, 
                                     time: selectedTime,
-                                    code: formData.prepaidCode
+                                    code: formData.prepaidCode,
+                                    deduct: requiredClasses
                                 })
                             });
                             
@@ -364,8 +416,9 @@
                                 setRemainingClasses(result.remaining);
                                 setIsPaying(false);
                                 setPaymentSuccess(true);
-                                const slotKey = `${formatDate(selectedDate)}-${selectedTime}`;
-                                setBookedSlots(prev => [...prev, slotKey]);
+                                // 將所有新預約的時段加入本機狀態更新 UI
+                                const newSlots = recurringDatesList.map(d => `${formatDate(d)}-${selectedTime}`);
+                                setBookedSlots(prev => [...prev, ...newSlots]);
                             } else {
                                 setIsPaying(false);
                                 setErrorMsg("預約失敗：" + result.message);
@@ -973,6 +1026,24 @@
                                     })
                                 )}
                             </div>
+                            
+                            {!isAdmin && selectedTime && (
+                                <div className="mt-6 fade-in border-t-2 border-mocha pt-6">
+                                    <label className="block text-sm tracking-widest text-ink mb-4 font-bold text-center">需要連續預約幾週？</label>
+                                    <div className="flex flex-wrap gap-2 justify-center">
+                                        {[1, 4, 8].map(weeks => (
+                                            <button
+                                                key={weeks}
+                                                onClick={() => setRecurringWeeks(weeks)}
+                                                className={`px-4 py-2 rounded-lg text-xs sm:text-sm tracking-widest font-bold transition-colors border-2 ${recurringWeeks === weeks ? 'bg-[#C19A6B] text-white border-[#C19A6B] shadow-sm' : 'bg-white text-[#8C7E71] border-[#E6DED5] hover:border-[#C19A6B]'}`}
+                                            >
+                                                {weeks === 1 ? '單次預約(1堂)' : weeks === 4 ? '連續4週(1個月)' : '連續8週(2個月)'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                         </div>
 
                         <div className="flex justify-between items-center pt-4">
@@ -992,7 +1063,7 @@
                                 <p className="mb-2">已為您保留上課時段</p>
                                 {remainingClasses !== null ? (
                                     <React.Fragment>
-                                        <span className="text-ink bg-accent-light px-4 py-2 rounded-lg font-bold my-3 inline-block border border-accent">本次扣除 1 堂，課程包剩餘：{remainingClasses} 堂</span><br/>
+                                        <span className="text-ink bg-accent-light px-4 py-2 rounded-lg font-bold my-3 inline-block border border-accent">本次扣除 {recurringDatesList.length} 堂，課程包剩餘：{remainingClasses} 堂</span><br/>
                                         <span className="text-sm mt-2 mb-4 inline-block text-ink bg-milk p-4 rounded-xl">🔔 預約資訊與上課連結已寄至您的信箱囉！<br/>若有任何問題請與老師聯絡。</span>
                                     </React.Fragment>
                                 ) : (
@@ -1009,8 +1080,29 @@
                         <div className="p-8 line-border bg-white relative">
                             <h3 className="text-[22px] font-serif mb-8 text-center tracking-widest border-b-2 border-mocha pb-4 text-ink font-bold">確認預約明細</h3>
                             <div className="space-y-4 pb-6 mb-6 border-b-2 border-mocha">
-                                <div className="flex justify-between items-center pb-2 border-b border-mocha/40">
-                                    <span className="text-ink-light tracking-widest text-[14px] font-bold">上課時間</span><span className="font-sans text-ink font-bold text-[15px]">{formatDisplayDate(selectedDate)} {selectedTime}</span>
+                                <div className="pb-4 border-b border-mocha/40">
+                                    <span className="text-ink-light tracking-widest text-[14px] font-bold block mb-3">上課時間</span>
+                                    <div className="space-y-2">
+                                        {recurringDatesList.map((date, index) => (
+                                            <div key={index} className="flex justify-between items-center bg-milk px-4 py-3 rounded-lg border border-mocha group transition-all">
+                                                <span className="font-sans text-ink font-bold text-[15px]">{formatDisplayDate(date)} {selectedTime}</span>
+                                                <button 
+                                                    onClick={() => setRecurringDatesList(prev => prev.filter((_, i) => i !== index))}
+                                                    className="text-[#D4C4B7] hover:text-red-500 hover:bg-white p-1.5 rounded-md transition-all outline-none"
+                                                    title="刪除此日期"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {recurringDatesList.length === 0 && (
+                                            <div className="text-red-500 text-sm font-bold text-center py-3 bg-red-50 rounded-lg border border-red-200">
+                                                請至少保留一個預約日期，或返回上一步重新選擇。
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="flex flex-col pt-2">
                                     <label className="text-ink-light tracking-widest text-[14px] font-bold mb-2">課程代碼 <span className="text-accent">*</span></label>
@@ -1025,7 +1117,8 @@
                                 </div>
                             </div>
                             <div className="flex justify-between items-end mb-6 bg-milk p-4 rounded-xl border border-mocha">
-                                <span className="font-sans text-[14px] tracking-widest text-ink-light font-bold">扣除堂數</span><span className="text-[17px] font-sans text-ink tracking-wider font-bold whitespace-nowrap">1 堂</span>
+                                <span className="font-sans text-[14px] tracking-widest text-ink-light font-bold">扣除堂數</span>
+                                <span className="text-[17px] font-sans text-ink tracking-wider font-bold whitespace-nowrap">{recurringDatesList.length} 堂</span>
                             </div>
                             {errorMsg && <div className="mb-6 text-center text-red-600 bg-red-50 py-3 rounded-lg border border-red-200 text-sm tracking-widest font-bold">{errorMsg}</div>}
                             {isPaying ? (
@@ -1033,8 +1126,8 @@
                             ) : (
                                 <button 
                                     onClick={handlePayment} 
-                                    disabled={!formData.prepaidCode.trim()}
-                                    className={`w-full py-4 transition-all duration-300 font-sans tracking-widest flex items-center justify-center text-[18px] rounded-full shadow-md font-bold select-none outline-none border-2 ${!formData.prepaidCode.trim() ? 'bg-[#E6DED5] text-[#8C7E71] border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95'}`}
+                                    disabled={!formData.prepaidCode.trim() || recurringDatesList.length === 0}
+                                    className={`w-full py-4 transition-all duration-300 font-sans tracking-widest flex items-center justify-center text-[18px] rounded-full shadow-md font-bold select-none outline-none border-2 ${(!formData.prepaidCode.trim() || recurringDatesList.length === 0) ? 'bg-[#E6DED5] text-[#8C7E71] border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95'}`}
                                 >
                                     確認預約課程
                                 </button>
