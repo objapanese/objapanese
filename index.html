@@ -1030,14 +1030,17 @@
                             {!isAdmin && selectedTime && (
                                 <div className="mt-6 fade-in border-t-2 border-mocha pt-6">
                                     <label className="block text-sm tracking-widest text-ink mb-4 font-bold text-center">需要連續預約幾週？</label>
-                                    <div className="flex flex-wrap gap-2 justify-center">
+                                    <div className="flex gap-1.5 sm:gap-2 justify-between w-full">
                                         {[1, 4, 8].map(weeks => (
                                             <button
                                                 key={weeks}
                                                 onClick={() => setRecurringWeeks(weeks)}
-                                                className={`px-4 py-2 rounded-lg text-xs sm:text-sm tracking-widest font-bold transition-colors border-2 ${recurringWeeks === weeks ? 'bg-[#C19A6B] text-white border-[#C19A6B] shadow-sm' : 'bg-white text-[#8C7E71] border-[#E6DED5] hover:border-[#C19A6B]'}`}
+                                                className={`flex-1 px-1 py-2 sm:py-2.5 rounded-lg text-[11px] sm:text-sm tracking-tight sm:tracking-widest font-bold transition-colors border-2 flex flex-col items-center justify-center gap-0.5 ${recurringWeeks === weeks ? 'bg-[#C19A6B] text-white border-[#C19A6B] shadow-sm' : 'bg-white text-[#8C7E71] border-[#E6DED5] hover:border-[#C19A6B]'}`}
                                             >
-                                                {weeks === 1 ? '單次預約(1堂)' : weeks === 4 ? '連續4週(1個月)' : '連續8週(2個月)'}
+                                                <span className="whitespace-nowrap">{weeks === 1 ? '單次預約' : weeks === 4 ? '連續4週' : '連續8週'}</span>
+                                                <span className={`text-[9px] sm:text-xs whitespace-nowrap ${recurringWeeks === weeks ? 'text-white/90' : 'text-[#8C7E71]/80'}`}>
+                                                    {weeks === 1 ? '(1堂)' : weeks === 4 ? '(1個月)' : '(2個月)'}
+                                                </span>
                                             </button>
                                         ))}
                                     </div>
