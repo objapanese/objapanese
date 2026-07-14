@@ -514,7 +514,7 @@
             const renderHome = () => (
                 <div className="fade-in max-w-6xl mx-auto space-y-6 pt-4">
                     <h2 className="text-2xl font-serif mb-8 text-center text-ink tracking-wider font-bold">請選擇服務項目</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                         {/* 報名課程 */}
                         <button onClick={() => { setMode('purchase'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
                             <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
@@ -537,7 +537,7 @@
                         </button>
 
                         {/* 預約上課 */}
-                        <button style={{ display: 'none' }} onClick={() => { setMode('book'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
+                        <button onClick={() => { setMode('book'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
                             <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
                                 <span className="absolute">🗓️</span>
                             </div>
