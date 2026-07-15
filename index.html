@@ -531,13 +531,13 @@
                 );
 
                 return (
-                    <div className="fade-in max-w-6xl mx-auto space-y-6 pt-4">
-                        <h2 className="text-2xl font-serif mb-8 text-center text-ink tracking-wider font-bold">
+                    <div className="fade-in max-w-6xl mx-auto space-y-4 md:space-y-6 pt-2 md:pt-4">
+                        <h2 className="text-2xl font-serif mb-2 md:mb-8 text-center text-ink tracking-wider font-bold">
                             {isAdmin ? '後台管理中心' : '請選擇服務項目'}
                         </h2>
                         
                         {/* 統一使用兩格排版並置中，因為未登入和登入狀態都剛好是兩個按鈕 */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 max-w-[800px] mx-auto gap-6 md:gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 max-w-[800px] mx-auto gap-4 md:gap-8">
                             
                             {!isAdmin && (
                                 <HomeCard 
