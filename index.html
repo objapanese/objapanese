@@ -136,8 +136,9 @@
             return slots;
         };
 
-        const StepIndicator = ({ currentStep, mode, isAdmin }) => {
-            if (!mode || isAdmin) return null; 
+        const StepIndicator = ({ currentStep, mode }) => {
+            // 排班模式不顯示進度條
+            if (!mode || mode === 'adminSchedule') return null; 
             
             let steps = [];
             if (mode === 'purchase') {
@@ -184,7 +185,6 @@
             const [selectedDate, setSelectedDate] = useState(null);
             const [selectedTime, setSelectedTime] = useState(null);
 
-            // --- 新增連續預約狀態 ---
             const [recurringWeeks, setRecurringWeeks] = useState(1);
             const [recurringDatesList, setRecurringDatesList] = useState([]);
             
@@ -304,9 +304,9 @@
 
             useEffect(() => {
                 let interval;
-                if (!mode || (mode === 'book' && (step === 1 || step === 2))) {
+                if (!mode || ( (mode === 'book' || mode === 'adminSchedule') && (step === 1 || step === 2))) {
                     fetchBookedSlots();
-                    if (mode === 'book' && (step === 1 || step === 2)) {
+                    if ((mode === 'book' || mode === 'adminSchedule') && (step === 1 || step === 2)) {
                         interval = setInterval(() => fetchBookedSlots(), 8000);
                     }
                 }
@@ -320,14 +320,13 @@
                 if (mode === 'purchase') {
                     if (step === 1 && formData.name && formData.email) setStep(2);
                     else if (step === 2 && formData.plan) setStep(3);
-                } else if (mode === 'book') {
+                } else if (mode === 'book' || mode === 'adminSchedule') {
                     if (step === 1 && selectedDate) {
                         setStep(2);
-                        setRecurringWeeks(1); // 重新選擇日期時重設預約週數
+                        setRecurringWeeks(1); 
                     }
-                    else if (step === 2 && (isAdmin || selectedTime)) {
-                        if (!isAdmin) {
-                            // 根據選擇的週數建立日期清單，供第三步顯示及刪除
+                    else if (step === 2 && selectedTime) {
+                        if (mode === 'book') {
                             const dates = [];
                             let current = new Date(selectedDate);
                             for (let i = 0; i < recurringWeeks; i++) {
@@ -335,8 +334,8 @@
                                 current.setDate(current.getDate() + 7);
                             }
                             setRecurringDatesList(dates);
+                            setStep(3);
                         }
-                        setStep(3);
                     }
                 }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -361,7 +360,6 @@
                 if (mode === 'book') {
                     if (GOOGLE_WEBHOOK_URL) {
                         try {
-                            // 送出預約前，先在背景驗證課程代碼與剩餘堂數
                             const queryResponse = await fetch(GOOGLE_WEBHOOK_URL, {
                                 method: 'POST',
                                 redirect: 'follow',
@@ -380,7 +378,6 @@
                                 return;
                             }
 
-                            // 確認要預約的總堂數 (依據目前明細中的日期數量)
                             const requiredClasses = recurringDatesList.length;
 
                             if (queryResult.remaining < requiredClasses) {
@@ -389,7 +386,6 @@
                                 return;
                             }
 
-                            // 格式化所有的日期
                             const formattedDates = recurringDatesList.map(d => formatDate(d)).join(',');
                             const formattedDisplayDates = recurringDatesList.map(d => formatDisplayDate(d)).join(', ');
 
@@ -416,7 +412,6 @@
                                 setRemainingClasses(result.remaining);
                                 setIsPaying(false);
                                 setPaymentSuccess(true);
-                                // 將所有新預約的時段加入本機狀態更新 UI
                                 const newSlots = recurringDatesList.map(d => `${formatDate(d)}-${selectedTime}`);
                                 setBookedSlots(prev => [...prev, ...newSlots]);
                             } else {
@@ -511,80 +506,90 @@
                 setFormData({ ...formData, [e.target.name]: e.target.value });
             };
 
-            const renderHome = () => (
-                <div className="fade-in max-w-6xl mx-auto space-y-6 pt-4">
-                    <h2 className="text-2xl font-serif mb-8 text-center text-ink tracking-wider font-bold">請選擇服務項目</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-                        {/* 報名課程 */}
-                        <button onClick={() => { setMode('purchase'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
-                            <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
-                                <span className="absolute">📚</span>
-                            </div>
-                            <h3 className="text-[26px] font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">報名課程</h3>
-                            <div className="flex gap-1.5 mb-5 justify-center">
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                            </div>
-                            <p className="text-[13px] text-[#8C7E71] tracking-[0.1em] leading-relaxed mb-8 px-2 min-h-[40px] font-bold">
-                                首次報名上課，<br/>或堂數用盡需補購的同學。
-                            </p>
-                            <div className="mt-auto px-8 py-2.5 bg-[#FAF7F2] border border-[#E6DED5] text-[#4A3F35] rounded-full text-sm font-bold tracking-widest flex items-center justify-center group-hover:bg-[#F3EDE7] group-hover:border-[#C19A6B] transition-all w-4/5 max-w-[200px]">
-                                前往報名 <span className="ml-2 text-[#C19A6B] group-hover:translate-x-1 transition-transform">❯</span>
-                            </div>
-                        </button>
+            // 利用共用元件整理首頁，提升維護性
+            const renderHome = () => {
+                const HomeCard = ({ icon, title, desc, btnText, onClick, isShadowIcon = false }) => (
+                    <button onClick={onClick} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
+                        <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
+                            <span className={`absolute ${isShadowIcon ? 'drop-shadow-md' : ''}`}>{icon}</span>
+                        </div>
+                        <h3 className="text-[26px] font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">{title}</h3>
+                        <div className="flex gap-1.5 mb-5 justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
+                        </div>
+                        <p className="text-[13px] text-[#8C7E71] tracking-[0.1em] leading-relaxed mb-8 px-2 min-h-[40px] font-bold">
+                            {desc}
+                        </p>
+                        <div className="mt-auto px-8 py-2.5 bg-[#FAF7F2] border border-[#E6DED5] text-[#4A3F35] rounded-full text-sm font-bold tracking-widest flex items-center justify-center group-hover:bg-[#F3EDE7] group-hover:border-[#C19A6B] transition-all w-4/5 max-w-[200px]">
+                            {btnText} <span className="ml-2 text-[#C19A6B] group-hover:translate-x-1 transition-transform">❯</span>
+                        </div>
+                    </button>
+                );
 
-                        {/* 預約上課 */}
-                        <button onClick={() => { setMode('book'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
-                            <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
-                                <span className="absolute">🗓️</span>
-                            </div>
-                            <h3 className="text-[26px] font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">預約上課</h3>
-                            <div className="flex gap-1.5 mb-5 justify-center">
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                            </div>
-                            <p className="text-[13px] text-[#8C7E71] tracking-[0.1em] leading-relaxed mb-8 px-2 min-h-[40px] font-bold">
-                                已經持有課程包代碼，<br/>需彈性安排上課時間的同學。
-                            </p>
-                            <div className="mt-auto px-8 py-2.5 bg-[#FAF7F2] border border-[#E6DED5] text-[#4A3F35] rounded-full text-sm font-bold tracking-widest flex items-center justify-center group-hover:bg-[#F3EDE7] group-hover:border-[#C19A6B] transition-all w-4/5 max-w-[200px]">
-                                前往預約 <span className="ml-2 text-[#C19A6B] group-hover:translate-x-1 transition-transform">❯</span>
-                            </div>
-                        </button>
+                return (
+                    <div className="fade-in max-w-6xl mx-auto space-y-6 pt-4">
+                        <h2 className="text-2xl font-serif mb-8 text-center text-ink tracking-wider font-bold">
+                            {isAdmin ? '後台管理中心' : '請選擇服務項目'}
+                        </h2>
                         
-                        {/* 查詢預約 */}
-                        <button onClick={() => { setMode('query'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-8 pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full">
-                            <div className="w-24 h-24 rounded-[2rem] border-2 border-dashed border-[#E6DED5] flex items-center justify-center text-5xl mb-6 group-hover:scale-105 group-hover:border-[#C19A6B] group-hover:bg-[#FAF7F2] transition-all relative">
-                                <span className="absolute drop-shadow-md">🔍</span>
-                            </div>
-                            <h3 className="text-[26px] font-serif text-[#4A3F35] font-bold mb-3 tracking-widest">我的課程</h3>
-                            <div className="flex gap-1.5 mb-5 justify-center">
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#E6DED5] group-hover:bg-[#C19A6B] transition-colors"></div>
-                            </div>
-                            <p className="text-[13px] text-[#8C7E71] tracking-[0.1em] leading-relaxed mb-8 px-2 min-h-[40px] font-bold">
-                                查看剩餘堂數與上課紀錄，<br/>方便隨時掌握學習進度。
-                            </p>
-                            <div className="mt-auto px-8 py-2.5 bg-[#FAF7F2] border border-[#E6DED5] text-[#4A3F35] rounded-full text-sm font-bold tracking-widest flex items-center justify-center group-hover:bg-[#F3EDE7] group-hover:border-[#C19A6B] transition-all w-4/5 max-w-[200px]">
-                                前往查看 <span className="ml-2 text-[#C19A6B] group-hover:translate-x-1 transition-transform">❯</span>
-                            </div>
-                        </button>
+                        {/* 統一使用兩格排版並置中，因為未登入和登入狀態都剛好是兩個按鈕 */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 max-w-[800px] mx-auto gap-6 md:gap-8">
+                            
+                            {!isAdmin && (
+                                <HomeCard 
+                                    icon="📚" 
+                                    title="報名課程" 
+                                    desc={<React.Fragment>首次報名上課，<br/>或堂數用盡需補購的同學。</React.Fragment>}
+                                    btnText="前往報名"
+                                    onClick={() => { setMode('purchase'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                />
+                            )}
+                            
+                            {isAdmin && (
+                                <HomeCard 
+                                    icon="🗓️" 
+                                    title="預約上課" 
+                                    desc={<React.Fragment>進入學生預約模式，<br/>協助手動登記學生預約。</React.Fragment>}
+                                    btnText="前往預約"
+                                    onClick={() => { setMode('book'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                />
+                            )}
+                            
+                            {!isAdmin && (
+                                <HomeCard 
+                                    icon="🔍" 
+                                    title="我的課程" 
+                                    isShadowIcon={true}
+                                    desc={<React.Fragment>查看剩餘堂數與上課紀錄，<br/>方便隨時掌握學習進度。</React.Fragment>}
+                                    btnText="前往查看"
+                                    onClick={() => { setMode('query'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                />
+                            )}
+
+                            {/* 只有管理員能看到原本排班開關時段的功能 */}
+                            {isAdmin && (
+                                <HomeCard 
+                                    icon="⚙️" 
+                                    title="排班管理" 
+                                    desc={<React.Fragment>管理每週開放時段，<br/>設定可預約日期與休假。</React.Fragment>}
+                                    btnText="前往管理"
+                                    onClick={() => { setMode('adminSchedule'); setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                />
+                            )}
+                        </div>
+
+                        <div className="flex justify-center mt-10 pb-4">
+                            <a href="https://lin.ee/OYIH1YB" target="_blank" rel="noopener noreferrer" className="hover:scale-105 active:scale-95 transition-transform drop-shadow-sm inline-block" title="加入 LINE 好友">
+                                <img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" alt="加入好友" style={{ height: '34px' }} border="0" />
+                            </a>
+                        </div>
                     </div>
-                    <div className="flex justify-center mt-10 pb-4">
-                        <a href="https://lin.ee/OYIH1YB" target="_blank" rel="noopener noreferrer" className="hover:scale-105 active:scale-95 transition-transform drop-shadow-sm inline-block" title="加入 LINE 好友">
-                            <img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" alt="加入好友" style={{ height: '34px' }} border="0" />
-                        </a>
-                    </div>
-                </div>
-            );
+                );
+            };
 
             const renderQueryStep1 = () => (
                 <div className="fade-in max-w-lg mx-auto space-y-6 pt-4">
@@ -799,6 +804,9 @@
             };
 
             const renderBookStep1 = () => {
+                // 將 isAdmin 的判斷改為 isScheduleMode 的判斷
+                const isScheduleMode = mode === 'adminSchedule';
+
                 const year = viewDate.getFullYear();
                 const month = viewDate.getMonth();
                 const rawFirstDay = new Date(year, month, 1).getDay();
@@ -835,7 +843,7 @@
                     const isDayClosed = closedDays.includes(dateStr); 
                     
                     const isBookable = !isPast24Hours && !isTooFar && isAvailableDay && !isDayClosed;
-                    const isClickable = isAdmin ? (!isTooFar && isAvailableDay) : isBookable;
+                    const isClickable = isScheduleMode ? (!isTooFar && isAvailableDay) : isBookable;
                     const isSelected = selectedDate && selectedDate.getDate() === d && selectedDate.getMonth() === month && selectedDate.getFullYear() === year;
 
                     calendarDays.push(
@@ -848,7 +856,7 @@
                                     setStep(2);
                                     window.scrollTo({ top: 0, behavior: 'smooth' });
                                 }}
-                                className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-[16px] font-sans font-bold transition-all duration-300 select-none outline-none ${!isClickable ? 'text-gray-300 cursor-not-allowed' : isSelected ? 'bg-[#4A3F35] text-white shadow-md border-2 border-[#4A3F35]' : (isAdmin && isDayClosed) ? 'text-gray-400 bg-gray-100 hover:border-gray-300 border-2 border-transparent' : 'text-[#4A3F35] bg-white border-2 border-transparent hover:border-[#C19A6B] hover:bg-[#FAF7F2] shadow-sm hover:shadow'}`}
+                                className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-[16px] font-sans font-bold transition-all duration-300 select-none outline-none ${!isClickable ? 'text-gray-300 cursor-not-allowed' : isSelected ? 'bg-[#4A3F35] text-white shadow-md border-2 border-[#4A3F35]' : (isScheduleMode && isDayClosed) ? 'text-gray-400 bg-gray-100 hover:border-gray-300 border-2 border-transparent' : 'text-[#4A3F35] bg-white border-2 border-transparent hover:border-[#C19A6B] hover:bg-[#FAF7F2] shadow-sm hover:shadow'}`}
                             >
                                 {d}
                             </button>
@@ -858,9 +866,9 @@
 
                 return (
                     <div className="fade-in space-y-6 max-w-md mx-auto pb-10">
-                        {isAdmin && (
+                        {isScheduleMode && (
                             <div className="mb-2 bg-accent-light border border-accent rounded-2xl p-3 text-center text-ink text-xs tracking-widest fade-in font-bold">
-                                🔧 後台模式：點選下方日期後進入時段設定。
+                                🔧 排班管理模式：點選下方日期後進入時段設定。
                             </div>
                         )}
                         <div className="text-center mb-6">
@@ -900,12 +908,15 @@
             };
 
             const renderBookStep2 = () => {
+                const isScheduleMode = mode === 'adminSchedule';
                 const isCurrentDayClosed = selectedDate ? closedDays.includes(formatDate(selectedDate)) : false;
 
                 return (
                     <div className="fade-in max-w-md mx-auto space-y-6">
                         <div className="text-center mb-6">
-                            <h2 className="text-2xl font-serif mb-3 text-ink tracking-wider font-bold">選擇上課時段</h2>
+                            <h2 className="text-2xl font-serif mb-3 text-ink tracking-wider font-bold">
+                                {isScheduleMode ? '設定開放時段' : '選擇上課時段'}
+                            </h2>
                         </div>
                         
                         <div className="p-6 sm:p-8 line-border flex flex-col relative bg-white shadow-sm min-h-[300px]">
@@ -916,7 +927,7 @@
                                 </p>
                             </div>
 
-                            {isAdmin && (
+                            {isScheduleMode && (
                                 <button
                                     disabled={isToggling}
                                     onClick={async () => {
@@ -972,15 +983,15 @@
                                     TIME_SLOTS.map((time, idx) => {
                                         const slotKey = `${formatDate(selectedDate)}-${time}`;
                                         const isBooked = bookedSlots.includes(slotKey);
-                                        const isSelected = !isAdmin && selectedTime === time;
+                                        const isSelected = !isScheduleMode && selectedTime === time;
                                         const isSlotToggling = togglingSlots[slotKey] === true;
 
                                         return (
                                             <button
                                                 key={idx}
-                                                disabled={(!isAdmin && isBooked) || isSlotToggling || isToggling}
+                                                disabled={(!isScheduleMode && isBooked) || isSlotToggling || isToggling}
                                                 onClick={async () => {
-                                                    if (isAdmin) {
+                                                    if (isScheduleMode) {
                                                         setTogglingSlots(prev => ({ ...prev, [slotKey]: true }));
                                                         const isClosingSlot = !isBooked;
                                                         
@@ -1012,14 +1023,14 @@
                                                         setSelectedTime(time);
                                                     }
                                                 }}
-                                                className={`w-full group relative flex items-center justify-between px-8 py-5 border-2 transition-all duration-300 rounded-xl select-none outline-none ${isSlotToggling || isToggling ? 'btn-processing' : ''} ${isBooked ? (isAdmin ? 'bg-red-50 border-red-300 text-red-800' : 'bg-[#F3F4F6] border-[#E5E7EB] cursor-not-allowed opacity-70') : isSelected ? 'bg-[#F3EDE7] border-[#C19A6B] text-[#4A3F35] shadow-sm scale-[1.02]' : 'bg-white border-[#E6DED5] hover:border-[#C19A6B] hover:bg-[#FAF7F2] text-[#4A3F35]'}`}
+                                                className={`w-full group relative flex items-center justify-between px-8 py-5 border-2 transition-all duration-300 rounded-xl select-none outline-none ${isSlotToggling || isToggling ? 'btn-processing' : ''} ${isBooked ? (isScheduleMode ? 'bg-red-50 border-red-300 text-red-800' : 'bg-[#F3F4F6] border-[#E5E7EB] cursor-not-allowed opacity-70') : isSelected ? 'bg-[#F3EDE7] border-[#C19A6B] text-[#4A3F35] shadow-sm scale-[1.02]' : 'bg-white border-[#E6DED5] hover:border-[#C19A6B] hover:bg-[#FAF7F2] text-[#4A3F35]'}`}
                                             >
-                                                <span className={`text-xl font-sans tracking-widest font-bold transition-colors ${isBooked && !isAdmin ? 'line-through text-gray-400' : 'text-[#4A3F35]'}`}>
+                                                <span className={`text-xl font-sans tracking-widest font-bold transition-colors ${isBooked && !isScheduleMode ? 'line-through text-gray-400' : 'text-[#4A3F35]'}`}>
                                                     {time}
                                                 </span>
                                                 
-                                                <span className={`text-xs tracking-widest px-4 py-2 transition-colors rounded-lg font-bold whitespace-nowrap ${isSlotToggling ? '處理中' : isBooked ? (isAdmin ? '點擊開放' : '已額滿') : (isAdmin ? '點擊關閉' : (isSelected ? '已選擇' : '可預約'))} ${isSelected && !isSlotToggling ? 'bg-[#C19A6B] text-white shadow-sm border-2 border-[#C19A6B]' : 'bg-white text-[#8C7E71] border-2 border-[#E6DED5] group-hover:border-[#C19A6B] group-hover:text-[#C19A6B]'}`}>
-                                                    {isSlotToggling ? '...' : isBooked ? (isAdmin ? '點擊開放' : '已額滿') : (isAdmin ? '點擊關閉' : (isSelected ? '已選擇' : '可預約'))}
+                                                <span className={`text-xs tracking-widest px-4 py-2 transition-colors rounded-lg font-bold whitespace-nowrap ${isSlotToggling ? '處理中' : isBooked ? (isScheduleMode ? '點擊開放' : '已額滿') : (isScheduleMode ? '點擊關閉' : (isSelected ? '已選擇' : '可預約'))} ${isSelected && !isSlotToggling ? 'bg-[#C19A6B] text-white shadow-sm border-2 border-[#C19A6B]' : 'bg-white text-[#8C7E71] border-2 border-[#E6DED5] group-hover:border-[#C19A6B] group-hover:text-[#C19A6B]'}`}>
+                                                    {isSlotToggling ? '...' : isBooked ? (isScheduleMode ? '點擊開放' : '已額滿') : (isScheduleMode ? '點擊關閉' : (isSelected ? '已選擇' : '可預約'))}
                                                 </span>
                                             </button>
                                         );
@@ -1027,7 +1038,7 @@
                                 )}
                             </div>
                             
-                            {!isAdmin && selectedTime && (
+                            {!isScheduleMode && selectedTime && (
                                 <div className="mt-6 fade-in border-t-2 border-mocha pt-6">
                                     <label className="block text-sm tracking-widest text-ink mb-4 font-bold text-center">需要連續預約幾堂？</label>
                                     <div className="flex gap-1.5 sm:gap-2 justify-between w-full">
@@ -1046,10 +1057,16 @@
 
                         </div>
 
-                        <div className="flex justify-between items-center pt-4">
-                            <button onClick={handleBack} className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors font-bold select-none outline-none px-2">返回修改日期</button>
-                            <button onClick={handleNext} disabled={!isAdmin && !selectedTime} className={`px-10 py-3 font-sans tracking-widest transition-all duration-300 rounded-full font-bold select-none outline-none ${(!isAdmin && !selectedTime) ? 'bg-[#E6DED5] text-[#8C7E71] border-2 border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-2 border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95 shadow-lg'}`}>下一步：確認預約</button>
-                        </div>
+                        {!isScheduleMode ? (
+                            <div className="flex justify-between items-center pt-4">
+                                <button onClick={handleBack} className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors font-bold select-none outline-none px-2">返回修改日期</button>
+                                <button onClick={handleNext} disabled={!selectedTime} className={`px-10 py-3 font-sans tracking-widest transition-all duration-300 rounded-full font-bold select-none outline-none ${(!selectedTime) ? 'bg-[#E6DED5] text-[#8C7E71] border-2 border-[#D4C4B7] cursor-not-allowed' : 'bg-[#4A3F35] border-2 border-[#4A3F35] text-white hover:bg-[#8C7E71] active:scale-95 shadow-lg'}`}>下一步：確認預約</button>
+                            </div>
+                        ) : (
+                            <div className="flex justify-center pt-4">
+                                <button onClick={handleBack} className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors font-bold select-none outline-none px-2">返回後台首頁</button>
+                            </div>
+                        )}
                     </div>
                 );
             };
@@ -1152,7 +1169,8 @@
                                     <button onClick={() => { setShowLogin(false); setPwdInput(''); setPwdError(''); }} className="flex-1 py-3 text-[#8C7E71] hover:bg-[#FAF7F2] rounded-xl text-sm tracking-widest transition-colors font-bold bg-white border-2 border-[#E6DED5] hover:border-[#4A3F35] outline-none">取消</button>
                                     <button onClick={() => {
                                         if (pwdInput === '121314') {
-                                            setIsAdmin(true); setShowLogin(false); setPwdInput(''); setMode('book'); setStep(1); 
+                                            // 登入後回到首頁，但以管理員權限顯示隱藏的選單
+                                            setIsAdmin(true); setShowLogin(false); setPwdInput(''); setMode(null); setStep(1); 
                                         } else { setPwdError('密碼錯誤'); }
                                     }} className="flex-1 py-3 text-[#4A3F35] hover:bg-[#FAF7F2] rounded-xl text-sm tracking-widest transition-colors font-bold bg-white border-2 border-[#E6DED5] hover:border-[#4A3F35] outline-none">登入</button>
                                 </div>
@@ -1164,9 +1182,10 @@
                         <button 
                             onClick={() => {
                                 if (isAdmin) {
+                                    // 登出時也直接回到一般首頁
                                     setIsAdmin(false);
                                     lastLocalUpdate.current = Date.now();
-                                    setMode('book'); setStep(1); setSelectedDate(null); setSelectedTime(null);
+                                    setMode(null); setStep(1); setSelectedDate(null); setSelectedTime(null);
                                 } else { setShowLogin(true); }
                             }}
                             className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-ink-light border-2 border-transparent hover:border-mocha hover:text-ink hover:bg-white rounded-full transition-all font-bold outline-none"
@@ -1180,15 +1199,22 @@
                     </header>
 
                     <main className="flex-1 container mx-auto px-4 max-w-6xl pb-10 flex flex-col">
-                        {!paymentSuccess && <StepIndicator currentStep={step} mode={mode} isAdmin={isAdmin} />}
+                        {!paymentSuccess && <StepIndicator currentStep={step} mode={mode} />}
                         <div className="transition-all duration-500 w-full flex-1">
                             {!mode && renderHome()}
                             {mode === 'purchase' && step === 1 && renderPurchaseStep1()}
                             {mode === 'purchase' && step === 2 && renderPurchaseStep2()}
                             {mode === 'purchase' && step === 3 && renderPurchaseStep3()}
+                            
+                            {/* 學生預約流程 */}
                             {mode === 'book' && step === 1 && renderBookStep1()}
                             {mode === 'book' && step === 2 && renderBookStep2()}
                             {mode === 'book' && step === 3 && renderBookStep3()}
+                            
+                            {/* 老師排班管理流程 */}
+                            {mode === 'adminSchedule' && step === 1 && renderBookStep1()}
+                            {mode === 'adminSchedule' && step === 2 && renderBookStep2()}
+                            
                             {mode === 'query' && step === 1 && renderQueryStep1()}
                             {mode === 'query' && step === 2 && renderQueryStep2()}
                         </div>
