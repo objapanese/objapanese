@@ -604,7 +604,7 @@
                                     value={queryCode}
                                     onChange={(e) => setQueryCode(e.target.value)}
                                     className="w-full bg-milk border-2 border-mocha px-4 py-4 focus:outline-none focus:border-ink focus:bg-white transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl text-center tracking-[0.2em] text-lg" 
-                                    placeholder="請輸入課程包代碼"
+                                    placeholder="請輸入專屬代碼"
                                     onKeyDown={(e) => e.key === 'Enter' && handleQuery()}
                                 />
                             </div>
@@ -701,7 +701,7 @@
                             </div>
                             <div>
                                 <label className="block text-sm tracking-widest text-ink mb-2 font-bold">電子郵件 <span className="text-accent">*</span></label>
-                                <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full bg-milk border-2 border-mocha px-4 py-3 focus:outline-none focus:border-ink focus:bg-white transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl" placeholder="預約後資訊將發送至此信箱"/>
+                                <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full bg-milk border-2 border-mocha px-4 py-3 focus:outline-none focus:border-ink focus:bg-white transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl" placeholder="預約資訊將傳送至此信箱"/>
                             </div>
                             <div>
                                 <label className="block text-sm tracking-widest text-ink mb-2 font-bold">選擇課程</label>
