@@ -146,7 +146,7 @@
             } else if (mode === 'book') {
                 steps = [{ step: 1, label: '日期' }, { step: 2, label: '時段' }, { step: 3, label: '確認' }];
             } else if (mode === 'query') {
-                steps = [{ step: 1, label: '輸入' }, { step: 2, label: '結果' }];
+                steps = [{ step: 1, label: '輸入' }, { step: 2, label: '選擇' }, { step: 3, label: '紀錄' }];
             }
 
             const stepWidth = 100 / steps.length;
@@ -465,6 +465,25 @@
                 setErrorMsg("");
                 setQueryResult(null);
 
+                // 測試用資料
+                if (queryCode === 'TEST') {
+                    setTimeout(() => {
+                        setQueryResult({
+                            remaining: 8,
+                            classes: [
+                                { date: '2026-07-25', time: '19:00~19:50', status: 'upcoming' },
+                                { date: '2026-07-10', time: '20:00~20:50', status: 'completed' }
+                            ],
+                            driveUrl: 'https://drive.google.com/'
+                        });
+                        setSelectedFilterMonth('all');
+                        setIsQuerying(false);
+                        setStep(2); // 進入功能選擇頁面
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }, 500);
+                    return;
+                }
+
                 if (!GOOGLE_WEBHOOK_URL) {
                     setIsQuerying(false);
                     setErrorMsg("系統錯誤：尚未設定後台網址");
@@ -488,10 +507,11 @@
                     if (result.status === 'success') {
                         setQueryResult({
                             remaining: result.remaining,
-                            classes: result.classes || []
+                            classes: result.classes || [],
+                            driveUrl: result.driveUrl || 'https://drive.google.com/' // 若後台未設定，測試預設網址
                         });
                         setSelectedFilterMonth('all');
-                        setStep(2);
+                        setStep(2); // 進入功能選擇頁面
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     } else {
                         setErrorMsg(result.message || "查無此代碼，請確認是否輸入正確。");
@@ -506,7 +526,6 @@
                 setFormData({ ...formData, [e.target.name]: e.target.value });
             };
 
-            // 利用共用元件整理首頁，提升維護性
             const renderHome = () => {
                 const HomeCard = ({ icon, title, desc, btnText, onClick, isShadowIcon = false }) => (
                     <button onClick={onClick} className="p-6 pb-8 md:p-8 md:pb-10 line-border bg-white hover:border-[#C19A6B] hover:-translate-y-1 transition-all duration-300 text-center flex flex-col group items-center outline-none shadow-sm relative w-full max-w-[320px] md:max-w-none mx-auto">
@@ -536,9 +555,7 @@
                             {isAdmin ? '後台管理中心' : '請選擇服務項目'}
                         </h2>
                         
-                        {/* 統一使用兩格排版並置中，因為未登入和登入狀態都剛好是兩個按鈕 */}
                         <div className="grid grid-cols-1 md:grid-cols-2 max-w-[800px] mx-auto gap-4 md:gap-8">
-                            
                             {!isAdmin && (
                                 <HomeCard 
                                     icon="📚" 
@@ -570,7 +587,6 @@
                                 />
                             )}
 
-                            {/* 只有管理員能看到原本排班開關時段的功能 */}
                             {isAdmin && (
                                 <HomeCard 
                                     icon="⚙️" 
@@ -630,11 +646,54 @@
                 </div>
             );
 
+            // Step 2: 新增的服務項目選擇選單
             const renderQueryStep2 = () => {
                 return (
                     <div className="fade-in max-w-lg mx-auto space-y-6 pt-4">
                         <div className="text-center mb-6">
-                            <h2 className="text-2xl font-serif mb-2 text-ink tracking-wider font-bold">查詢結果</h2>
+                            <h2 className="text-2xl font-serif mb-2 text-ink tracking-wider font-bold">請選擇功能</h2>
+                        </div>
+                        
+                        <div className="p-6 md:p-8 line-border bg-white space-y-4">
+
+                            <button onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="w-full text-left p-5 border-2 border-mocha bg-milk hover:border-accent hover:bg-white transition-all rounded-xl shadow-sm flex items-center group outline-none">
+                                <span className="text-3xl mr-4 group-hover:scale-110 transition-transform drop-shadow-sm">🗓️</span>
+                                <div className="flex flex-col">
+                                    <span className="text-lg font-sans font-bold text-ink tracking-widest">查詢已預約的課程</span>
+                                    <span className="text-xs text-ink-light font-bold mt-1 tracking-widest">查看所有上課紀錄與剩餘堂數</span>
+                                </div>
+                            </button>
+
+                            <a href={queryResult?.driveUrl || '#'} target="_blank" rel="noopener noreferrer" className={`w-full text-left p-5 border-2 transition-all rounded-xl shadow-sm flex items-center group outline-none ${queryResult?.driveUrl ? 'border-mocha bg-milk hover:border-accent hover:bg-white cursor-pointer' : 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'}`} onClick={(e) => { if(!queryResult?.driveUrl) e.preventDefault(); }}>
+                                <span className="text-3xl mr-4 group-hover:scale-110 transition-transform drop-shadow-sm">📓</span>
+                                <div className="flex flex-col">
+                                    <span className="text-lg font-sans font-bold text-ink tracking-widest">前往查看上課內容</span>
+                                    <span className="text-xs text-ink-light font-bold mt-1 tracking-widest">{queryResult?.driveUrl ? '開啟您的專屬雲端資料夾' : '尚無雲端資料夾連結'}</span>
+                                </div>
+                            </a>
+
+                            <a href="https://meet.google.com/mgi-avun-kfy" target="_blank" rel="noopener noreferrer" className="w-full text-left p-5 border-2 border-mocha bg-milk hover:border-accent hover:bg-white transition-all rounded-xl shadow-sm flex items-center group outline-none">
+                                <span className="text-3xl mr-4 group-hover:scale-110 transition-transform drop-shadow-sm">💻</span>
+                                <div className="flex flex-col">
+                                    <span className="text-lg font-sans font-bold text-ink tracking-widest">進入固定上課教室</span>
+                                    <span className="text-xs text-ink-light font-bold mt-1 tracking-widest">前往 Google Meet 教室</span>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div className="flex justify-center pt-2">
+                            <button onClick={handleBack} className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors flex items-center font-bold px-4 py-2 select-none outline-none">重新輸入代碼</button>
+                        </div>
+                    </div>
+                );
+            };
+
+            // Step 3: 原本查詢課程的列表畫面
+            const renderQueryStep3 = () => {
+                return (
+                    <div className="fade-in max-w-lg mx-auto space-y-6 pt-4">
+                        <div className="text-center mb-6">
+                            <h2 className="text-2xl font-serif mb-2 text-ink tracking-wider font-bold">已預約的課程</h2>
                         </div>
                         
                         <div className="p-8 line-border bg-white">
@@ -644,7 +703,7 @@
                             
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center mb-2 pb-3 border-b-2 border-mocha min-h-[44px]">
-                                    <p className="text-ink-light text-base tracking-widest font-bold">已預約的課程：</p>
+                                    <p className="text-ink-light text-base tracking-widest font-bold">預約紀錄：</p>
                                     {availableMonths.length > 0 && (
                                         <select 
                                             value={selectedFilterMonth} 
@@ -681,7 +740,7 @@
                         </div>
 
                         <div className="flex justify-center pt-2">
-                            <button onClick={handleBack} className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors flex items-center font-bold px-4 py-2 select-none outline-none">返回重新查詢</button>
+                            <button onClick={handleBack} className="text-sm tracking-widest text-[#8C7E71] hover:text-[#4A3F35] transition-colors flex items-center font-bold px-4 py-2 select-none outline-none">返回上一頁</button>
                         </div>
                     </div>
                 );
@@ -804,7 +863,6 @@
             };
 
             const renderBookStep1 = () => {
-                // 將 isAdmin 的判斷改為 isScheduleMode 的判斷
                 const isScheduleMode = mode === 'adminSchedule';
 
                 const year = viewDate.getFullYear();
@@ -1217,6 +1275,7 @@
                             
                             {mode === 'query' && step === 1 && renderQueryStep1()}
                             {mode === 'query' && step === 2 && renderQueryStep2()}
+                            {mode === 'query' && step === 3 && renderQueryStep3()}
                         </div>
                     </main>
 
