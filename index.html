@@ -102,7 +102,7 @@
         const PURCHASE_PLANS = [
             { id: '1', name: '單堂課程', price: 700, originalPrice: null, tag: '', subtitle: '' },
             { id: '8', name: '8堂課程包', price: 4800, originalPrice: 5600, tag: '', subtitle: '每堂只要 NT$600' },
-            { id: '20', name: '20堂課程包', price: 11000, originalPrice: 14000, tag: '', subtitle: '每堂只要 NT$550' }
+            { id: '20', name: '20堂課程包', price: 9999, originalPrice: 14000, tag: '', subtitle: '每堂只要 NT$500' }
         ];
 
         const formatDate = (date) => {
@@ -427,7 +427,7 @@
                     let paymentUrl = '';
                     if (formData.plan === '1') paymentUrl = 'https://p.ecpay.com.tw/6032D8C';
                     else if (formData.plan === '8') paymentUrl = 'https://p.ecpay.com.tw/8D937B9';
-                    else if (formData.plan === '20') paymentUrl = 'https://p.ecpay.com.tw/5B755BA';
+                    else if (formData.plan === '20') paymentUrl = 'https://p.ecpay.com.tw/42980BC';
 
                     if (paymentUrl) window.open(paymentUrl, '_blank');
 
@@ -765,7 +765,7 @@
                                 <span className="text-sm mt-6 mb-2 inline-block text-ink border-2 border-mocha bg-milk px-5 py-4 rounded-xl text-left">🔔 完成付款後，請麻煩告知老師！<br/>確認收到款項後，{formData.plan === '1' ? '將會為您安排上課時間。' : '預約專屬代碼將會傳給您。'}</span>
                             </div>
                             <div className="mb-8">
-                                <a href={formData.plan === '1' ? 'https://p.ecpay.com.tw/6032D8C' : formData.plan === '8' ? 'https://p.ecpay.com.tw/8D937B9' : 'https://p.ecpay.com.tw/5B755BA'} target="_blank" rel="noopener noreferrer" className="text-xs text-ink-light border-b border-ink-light hover:text-ink hover:border-ink transition-colors pb-1 font-bold">如果沒有彈出新視窗，請點擊此處前往結帳</a>
+                                <a href={formData.plan === '1' ? 'https://p.ecpay.com.tw/6032D8C' : formData.plan === '8' ? 'https://p.ecpay.com.tw/8D937B9' : 'https://p.ecpay.com.tw/42980BC'} target="_blank" rel="noopener noreferrer" className="text-xs text-ink-light border-b border-ink-light hover:text-ink hover:border-ink transition-colors pb-1 font-bold">如果沒有彈出新視窗，請點擊此處前往結帳</a>
                             </div>
                             <button onClick={resetAppToHome} className="w-full py-4 mt-2 bg-white text-ink border-2 border-mocha hover:border-ink hover:text-ink transition-colors font-sans tracking-widest text-sm rounded-full font-bold select-none shadow-sm outline-none">回到首頁</button>
                         </div>
