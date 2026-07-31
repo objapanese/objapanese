@@ -698,12 +698,12 @@
                         
                         <div className="p-8 line-border bg-white">
                             <div className="bg-accent-light border border-accent rounded-xl p-4 text-center mb-6 shadow-sm">
-                                <p className="text-ink text-xl tracking-widest font-bold">課程包尚未預約堂數剩餘：<span className="ml-1 text-ink font-sans">{queryResult?.remaining} 堂</span></p>
+                                <p className="text-ink text-xl tracking-widest font-bold">課程包尚未預約堂數：<span className="ml-1 text-ink font-sans">{queryResult?.remaining} 堂</span></p>
                             </div>
                             
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center mb-2 pb-3 border-b-2 border-mocha min-h-[44px]">
-                                    <p className="text-ink-light text-base tracking-widest font-bold">預約紀錄：</p>
+                                    <p className="text-ink-light text-base tracking-widest font-bold">預約課程紀錄：</p>
                                     {availableMonths.length > 0 && (
                                         <select 
                                             value={selectedFilterMonth} 
