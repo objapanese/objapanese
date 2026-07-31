@@ -188,7 +188,7 @@
             const [recurringWeeks, setRecurringWeeks] = useState(1);
             const [recurringDatesList, setRecurringDatesList] = useState([]);
             
-            const [formData, setFormData] = useState({ name: '', email: '', level: '已與老師聯絡', plan: '', prepaidCode: '' });
+            const [formData, setFormData] = useState({ name: '', email: '', level: '已與老師聯絡', plan: '', prepaidCode: '', codeType: 'code' });
             
             const [isPaying, setIsPaying] = useState(false);
             const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -199,6 +199,7 @@
             const [isToggling, setIsToggling] = useState(false); 
             const [togglingSlots, setTogglingSlots] = useState({});
 
+            const [queryType, setQueryType] = useState('code');
             const [queryCode, setQueryCode] = useState('');
             const [isQuerying, setIsQuerying] = useState(false);
             const [queryResult, setQueryResult] = useState(null);
@@ -261,11 +262,12 @@
                 setSelectedTime(null);
                 setRecurringWeeks(1);
                 setRecurringDatesList([]);
-                setFormData({ name: '', email: '', level: '已與老師聯絡', plan: '', prepaidCode: '' });
+                setFormData({ name: '', email: '', level: '已與老師聯絡', plan: '', prepaidCode: '', codeType: 'code' });
                 setIsPaying(false);
                 setPaymentSuccess(false);
                 setRemainingClasses(null);
                 setErrorMsg("");
+                setQueryType('code');
                 setQueryCode('');
                 setQueryResult(null);
                 setSelectedFilterMonth('all');
@@ -654,12 +656,30 @@
                     <div className="p-8 line-border bg-white">
                         <div className="space-y-6">
                             <div>
+                                <div className="flex p-1 bg-milk rounded-xl border border-mocha mb-4">
+                                    <button 
+                                        onClick={() => { setQueryType('code'); setQueryCode(''); setErrorMsg(''); }}
+                                        className={`flex-1 py-2 text-sm font-bold tracking-widest rounded-xl transition-all ${queryType === 'code' ? 'bg-[#4A3F35] text-white shadow-md' : 'text-ink-light hover:text-ink'}`}
+                                    >
+                                        專屬代碼
+                                    </button>
+                                    <button 
+                                        onClick={() => { setQueryType('email'); setQueryCode(''); setErrorMsg(''); }}
+                                        className={`flex-1 py-2 text-sm font-bold tracking-widest rounded-xl transition-all ${queryType === 'email' ? 'bg-[#4A3F35] text-white shadow-md' : 'text-ink-light hover:text-ink'}`}
+                                    >
+                                        電子信箱
+                                    </button>
+                                </div>
                                 <input 
-                                    type="text" 
+                                    type={queryType === 'email' ? 'email' : 'text'}
                                     value={queryCode}
-                                    onChange={(e) => setQueryCode(e.target.value.toUpperCase())}
+                                    onChange={(e) => {
+                                        let val = e.target.value.replace(/\s/g, '');
+                                        if (queryType === 'code') val = val.toUpperCase();
+                                        setQueryCode(val);
+                                    }}
                                     className="w-full bg-milk border-2 border-mocha px-4 py-4 focus:outline-none focus:border-ink focus:bg-white transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl text-center tracking-[0.2em] text-lg" 
-                                    placeholder="請輸入專屬代碼 / 電子信箱"
+                                    placeholder={queryType === 'code' ? "請輸入專屬代碼" : "請輸入電子信箱"}
                                     onKeyDown={(e) => e.key === 'Enter' && handleQuery()}
                                 />
                             </div>
@@ -1249,14 +1269,32 @@
                                     </div>
                                 </div>
                                 <div className="flex flex-col pt-2">
-                                    <label className="text-ink-light tracking-widest text-[14px] font-bold mb-2">課程代碼 <span className="text-accent">*</span></label>
+                                    <label className="text-ink-light tracking-widest text-[14px] font-bold mb-2">請選擇驗證方式 <span className="text-accent">*</span></label>
+                                    <div className="flex p-1 bg-milk rounded-xl border border-mocha mb-4">
+                                        <button 
+                                            onClick={() => { setFormData({ ...formData, codeType: 'code', prepaidCode: '' }); setErrorMsg(''); }}
+                                            className={`flex-1 py-2 text-sm font-bold tracking-widest rounded-xl transition-all ${formData.codeType === 'code' ? 'bg-[#4A3F35] text-white shadow-md' : 'text-ink-light hover:text-ink'}`}
+                                        >
+                                            專屬代碼
+                                        </button>
+                                        <button 
+                                            onClick={() => { setFormData({ ...formData, codeType: 'email', prepaidCode: '' }); setErrorMsg(''); }}
+                                            className={`flex-1 py-2 text-sm font-bold tracking-widest rounded-xl transition-all ${formData.codeType === 'email' ? 'bg-[#4A3F35] text-white shadow-md' : 'text-ink-light hover:text-ink'}`}
+                                        >
+                                            電子信箱
+                                        </button>
+                                    </div>
                                     <input 
-                                        type="text" 
+                                        type={formData.codeType === 'email' ? 'email' : 'text'}
                                         name="prepaidCode"
                                         value={formData.prepaidCode}
-                                        onChange={(e) => setFormData({ ...formData, prepaidCode: e.target.value.toUpperCase() })}
+                                        onChange={(e) => {
+                                            let val = e.target.value.replace(/\s/g, '');
+                                            if (formData.codeType === 'code') val = val.toUpperCase();
+                                            setFormData({ ...formData, prepaidCode: val });
+                                        }}
                                         className="w-full bg-milk border-2 border-mocha px-4 py-3 focus:outline-none focus:border-ink transition-colors placeholder-gray-400 text-ink font-sans font-bold rounded-xl shadow-sm tracking-widest text-[18px]"
-                                        placeholder="請輸入您的課程包代碼"
+                                        placeholder={formData.codeType === 'code' ? "請輸入專屬代碼" : "請輸入電子信箱"}
                                     />
                                 </div>
                             </div>
