@@ -204,29 +204,55 @@
             const [queryResult, setQueryResult] = useState(null);
             const [selectedFilterMonth, setSelectedFilterMonth] = useState('all');
 
+            const [courseTab, setCourseTab] = useState('upcoming'); // 'upcoming' 或 'completed'
+            const [visibleCount, setVisibleCount] = useState(5);
+
             const availableMonths = useMemo(() => {
                 if (!queryResult || !queryResult.classes) return [];
                 const months = new Set();
                 queryResult.classes.forEach(cls => {
+                    if (courseTab === 'upcoming' && cls.status !== 'upcoming') return;
+                    if (courseTab === 'completed' && cls.status !== 'completed') return;
                     const match = cls.date.match(/(\d{4})[/-](\d{1,2})/);
                     if (match) {
                         months.add(`${match[1]}-${match[2].padStart(2, '0')}`);
                     }
                 });
                 return Array.from(months).sort().reverse();
-            }, [queryResult]);
+            }, [queryResult, courseTab]);
 
             const filteredClasses = useMemo(() => {
                 if (!queryResult || !queryResult.classes) return [];
-                if (selectedFilterMonth === 'all') return queryResult.classes;
-                return queryResult.classes.filter(cls => {
-                    const match = cls.date.match(/(\d{4})[/-](\d{1,2})/);
-                    if (match) {
-                        return `${match[1]}-${match[2].padStart(2, '0')}` === selectedFilterMonth;
-                    }
-                    return false;
+                
+                let result = queryResult.classes.filter(cls => {
+                    if (courseTab === 'upcoming') return cls.status === 'upcoming';
+                    if (courseTab === 'completed') return cls.status === 'completed';
+                    return true;
                 });
-            }, [queryResult, selectedFilterMonth]);
+
+                if (selectedFilterMonth !== 'all') {
+                    result = result.filter(cls => {
+                        const match = cls.date.match(/(\d{4})[/-](\d{1,2})/);
+                        if (match) {
+                            return `${match[1]}-${match[2].padStart(2, '0')}` === selectedFilterMonth;
+                        }
+                        return false;
+                    });
+                }
+
+                // 排序：即將到來 (近到遠)，歷史紀錄 (新到舊)
+                result.sort((a, b) => {
+                    const dateA = new Date(a.date.replace(/-/g, '/'));
+                    const dateB = new Date(b.date.replace(/-/g, '/'));
+                    if (courseTab === 'upcoming') {
+                        return dateA - dateB; 
+                    } else {
+                        return dateB - dateA;
+                    }
+                });
+
+                return result;
+            }, [queryResult, selectedFilterMonth, courseTab]);
 
             const resetAppToHome = () => {
                 setMode(null);
@@ -243,6 +269,8 @@
                 setQueryCode('');
                 setQueryResult(null);
                 setSelectedFilterMonth('all');
+                setCourseTab('upcoming');
+                setVisibleCount(5);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
 
@@ -471,12 +499,21 @@
                         setQueryResult({
                             remaining: 8,
                             classes: [
+                                { date: '2026-08-01', time: '19:00~19:50', status: 'upcoming' },
+                                { date: '2026-08-05', time: '20:00~20:50', status: 'upcoming' },
+                                { date: '2026-08-08', time: '19:00~19:50', status: 'upcoming' },
+                                { date: '2026-08-12', time: '21:00~21:50', status: 'upcoming' },
+                                { date: '2026-08-15', time: '19:00~19:50', status: 'upcoming' },
+                                { date: '2026-08-19', time: '20:00~20:50', status: 'upcoming' },
                                 { date: '2026-07-25', time: '19:00~19:50', status: 'upcoming' },
-                                { date: '2026-07-10', time: '20:00~20:50', status: 'completed' }
+                                { date: '2026-07-10', time: '20:00~20:50', status: 'completed' },
+                                { date: '2026-07-03', time: '19:00~19:50', status: 'completed' }
                             ],
                             driveUrl: 'https://drive.google.com/'
                         });
                         setSelectedFilterMonth('all');
+                        setCourseTab('upcoming');
+                        setVisibleCount(5);
                         setIsQuerying(false);
                         setStep(2); // 進入功能選擇頁面
                         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -511,6 +548,8 @@
                             driveUrl: result.driveUrl || 'https://drive.google.com/' // 若後台未設定，測試預設網址
                         });
                         setSelectedFilterMonth('all');
+                        setCourseTab('upcoming');
+                        setVisibleCount(5);
                         setStep(2); // 進入功能選擇頁面
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     } else {
@@ -690,6 +729,8 @@
 
             // Step 3: 原本查詢課程的列表畫面
             const renderQueryStep3 = () => {
+                const displayedClasses = filteredClasses.slice(0, visibleCount);
+
                 return (
                     <div className="fade-in max-w-lg mx-auto space-y-6 pt-4">
                         <div className="text-center mb-6">
@@ -702,8 +743,24 @@
                             </div>
                             
                             <div className="space-y-4">
+                                {/* 狀態切換 Tabs */}
+                                <div className="flex p-1 bg-milk rounded-xl border border-mocha mb-2">
+                                    <button 
+                                        onClick={() => { setCourseTab('upcoming'); setVisibleCount(5); setSelectedFilterMonth('all'); }}
+                                        className={`flex-1 py-2 text-sm font-bold tracking-widest rounded-xl transition-all ${courseTab === 'upcoming' ? 'bg-[#4A3F35] text-white shadow-md' : 'text-ink-light hover:text-ink'}`}
+                                    >
+                                        即將到來
+                                    </button>
+                                    <button 
+                                        onClick={() => { setCourseTab('completed'); setVisibleCount(5); setSelectedFilterMonth('all'); }}
+                                        className={`flex-1 py-2 text-sm font-bold tracking-widest rounded-xl transition-all ${courseTab === 'completed' ? 'bg-[#4A3F35] text-white shadow-md' : 'text-ink-light hover:text-ink'}`}
+                                    >
+                                        歷史紀錄
+                                    </button>
+                                </div>
+
                                 <div className="flex justify-between items-center mb-2 pb-3 border-b-2 border-mocha min-h-[44px]">
-                                    <p className="text-ink-light text-base tracking-widest font-bold">預約課程紀錄：</p>
+                                    <p className="text-ink-light text-base tracking-widest font-bold">課程紀錄：</p>
                                     {availableMonths.length > 0 && (
                                         <select 
                                             value={selectedFilterMonth} 
@@ -719,22 +776,34 @@
                                         </select>
                                     )}
                                 </div>
-                                {filteredClasses.length > 0 ? (
-                                    filteredClasses.map((cls, idx) => (
-                                        <div key={idx} className={`p-5 rounded-xl border-2 flex justify-between items-center transition-all ${cls.status === 'upcoming' ? 'bg-white border-mocha hover:border-[#C19A6B] shadow-sm' : 'bg-gray-50 border-gray-200 opacity-60'}`}>
-                                            <div className="flex flex-col">
-                                                <span className={`font-sans font-bold tracking-wider text-lg ${cls.status === 'upcoming' ? 'text-ink' : 'text-gray-500 line-through'}`}>{cls.date}</span>
-                                                <span className={`text-sm mt-1 font-bold ${cls.status === 'upcoming' ? 'text-[#C19A6B]' : 'text-gray-400'}`}>{cls.time}</span>
+                                {displayedClasses.length > 0 ? (
+                                    <React.Fragment>
+                                        {displayedClasses.map((cls, idx) => (
+                                            <div key={idx} className={`p-5 rounded-xl border-2 flex justify-between items-center transition-all ${cls.status === 'upcoming' ? 'bg-white border-mocha hover:border-[#C19A6B] shadow-sm' : 'bg-gray-50 border-gray-200 opacity-60'}`}>
+                                                <div className="flex flex-col">
+                                                    <span className={`font-sans font-bold tracking-wider text-lg ${cls.status === 'upcoming' ? 'text-ink' : 'text-gray-500 line-through'}`}>{cls.date}</span>
+                                                    <span className={`text-sm mt-1 font-bold ${cls.status === 'upcoming' ? 'text-[#C19A6B]' : 'text-gray-400'}`}>{cls.time}</span>
+                                                </div>
+                                                <div>
+                                                    <span className={`text-xs px-3 py-1.5 rounded-md font-bold tracking-widest shadow-sm ${cls.status === 'upcoming' ? 'bg-[#C19A6B] text-white' : 'bg-gray-200 text-gray-500'}`}>
+                                                        {cls.status === 'upcoming' ? '即將到來' : '已完成'}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <span className={`text-xs px-3 py-1.5 rounded-md font-bold tracking-widest shadow-sm ${cls.status === 'upcoming' ? 'bg-[#C19A6B] text-white' : 'bg-gray-200 text-gray-500'}`}>
-                                                    {cls.status === 'upcoming' ? '即將到來' : '已完成'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))
+                                        ))}
+                                        {filteredClasses.length > visibleCount && (
+                                            <button 
+                                                onClick={() => setVisibleCount(prev => prev + 5)}
+                                                className="w-full py-3 mt-2 bg-milk border-2 border-mocha hover:border-[#C19A6B] hover:text-[#C19A6B] text-ink transition-colors font-sans tracking-widest text-sm rounded-xl font-bold select-none outline-none"
+                                            >
+                                                載入更多 ({filteredClasses.length - visibleCount})
+                                            </button>
+                                        )}
+                                    </React.Fragment>
                                 ) : (
-                                    <p className="text-center text-ink-light text-sm tracking-widest py-6 bg-milk rounded-xl border border-mocha">該月份目前沒有預約紀錄喔！</p>
+                                    <p className="text-center text-ink-light text-sm tracking-widest py-6 bg-milk rounded-xl border border-mocha">
+                                        {courseTab === 'upcoming' ? '該月份目前沒有即將到來的課程喔！' : '該月份目前沒有已完成的課程紀錄！'}
+                                    </p>
                                 )}
                             </div>
                         </div>
